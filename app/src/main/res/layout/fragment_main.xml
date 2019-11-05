@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_above="@id/bottom_nav"
+    android:background="@color/colorWhite">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appbar_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorNull"
+        android:fitsSystemWindows="true"
+        android:orientation="vertical"
+        android:textAlignment="textStart"
+        app:elevation="@dimen/qb_px_1"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$Behavior">
+
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/collapsing_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="textStart"
+            app:collapsedTitleGravity="center"
+            app:contentScrim="#00000000"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            app:scrimAnimationDuration="500"
+            app:statusBarScrim="@color/colorNull"
+
+            >
+
+
+            <ImageView
+                android:id="@+id/img_background"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/qb_px_128"
+                android:background="@mipmap/ic_background" />
+
+            <RelativeLayout
+                android:id="@+id/info_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="64dp"
+                android:visibility="visible">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="当前温度："
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:id="@+id/tv_temperature"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="18"
+                    android:textColor="@color/colorBlack"
+                    android:textSize="64sp"
+                    tools:text="18"
+
+                    />
+
+                <TextView
+                    android:id="@+id/tv_temperature_unit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/qb_px_8"
+                    android:layout_marginTop="@dimen/qb_px_20"
+                    android:layout_toEndOf="@id/tv_temperature"
+                    android:text="°C"
+                    android:textColor="@color/colorBlack"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/qb_px_32"
+                    android:layout_toEndOf="@id/tv_temperature_unit"
+                    android:text="当前湿度："
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:id="@+id/tv_humidity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/qb_px_32"
+                    android:layout_toEndOf="@id/tv_temperature_unit"
+                    android:text="----"
+                    android:textColor="@color/colorBlack"
+                    android:textSize="64sp"
+                    tools:text="92" />
+
+                <TextView
+                    android:id="@+id/tv_humidity_unit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/qb_px_8"
+                    android:layout_marginTop="@dimen/qb_px_20"
+                    android:layout_toEndOf="@id/tv_humidity"
+                    android:text="%"
+                    android:textColor="@color/colorBlack"
+                    android:textSize="16sp" />
+
+
+            </RelativeLayout>
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:contentInsetStart="0dp"
+                app:elevation="0dp"
+                app:layout_collapseMode="pin"></androidx.appcompat.widget.Toolbar>
+
+
+            <TextView
+                android:id="@+id/tv_warning"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_gravity="bottom"
+                android:paddingLeft="@dimen/qb_px_16"
+                android:text="当前未连接到温湿度设备"
+                android:textSize="12sp"
+                android:visibility="invisible" />
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/refresh_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            >
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/qb_px_64"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardCornerRadius="@dimen/qb_px_10"
+                app:cardMaxElevation="@dimen/qb_px_5">
+
+                <TextView
+                    android:id="@+id/tv_device_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="@dimen/qb_px_16"
+                    android:text="当前在线设备数：5"
+                    android:textColor="@color/colorBlack" />
+
+            </androidx.cardview.widget.CardView>
+
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/device_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/colorWhite"
+                tools:listitem="@layout/item_device_card"
+                tools:itemCount="10" />
+        </LinearLayout>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

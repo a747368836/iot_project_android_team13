@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorWhite"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:orientation="vertical">
+
+    <top.bilibililike.iot.view.BgView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        />
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/avatar"
+        android:layout_width="@dimen/qb_px_96"
+        android:layout_height="@dimen/qb_px_96"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="@dimen/qb_px_32"
+        android:src="@drawable/ic_launcher" />
+
+    <TextView
+        android:id="@+id/tv_nickname"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/avatar"
+        android:gravity="center"
+        android:paddingTop="8dp"
+        android:text="nickname"
+        android:textColor="@color/colorWhite"
+        android:textSize="24sp"
+        tools:text="昵称" />
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/refresh_layout"
+        android:layout_below="@id/tv_nickname"
+        android:layout_marginTop="@dimen/qb_px_24"
+        android:paddingBottom="@dimen/qb_px_16"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+        <include
+            layout="@layout/layout_card_device_num"
+
+            />
+
+
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/device_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/card_device_count"
+            android:background="@color/colorWhite"
+            tools:itemCount="10"
+            tools:listitem="@layout/item_device_card" />
+    </LinearLayout>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+</RelativeLayout>
