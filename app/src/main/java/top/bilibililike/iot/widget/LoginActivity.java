@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -17,15 +18,27 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.cardview.widget.CardView;
 
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.gson.Gson;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.Observer;
+import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
 import top.bilibililike.iot.R;
 import top.bilibililike.iot.base.BaseActivity;
+import top.bilibililike.iot.bean.UserBean;
+import top.bilibililike.iot.http.LoginService;
 import top.bilibililike.iot.utils.Status;
 import top.bilibililike.iot.view.WaveView;
 
@@ -51,6 +64,10 @@ public class LoginActivity extends BaseActivity {
 
     int originML,originMR;
 
+    private AnimatorSet set;
+
+    private boolean isloging = false;
+
 
 
     @Override
@@ -73,19 +90,7 @@ public class LoginActivity extends BaseActivity {
             inputAnimator(tvLogin, width, height);
             String account = edtAccount.getText().toString();
             String password = edtPassword.getText().toString();
-            new Thread(() -> {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                Status.setIsLogin(true);
-                Intent intent = new Intent(LoginActivity.this,MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
-                finish();
-
-            }).start();
+            login(account,password);
         });
         tvRegister.setOnClickListener( v -> {
             recovery();
@@ -94,6 +99,50 @@ public class LoginActivity extends BaseActivity {
     }
 
 
+    private void login(String username,String password){
+        isloging = true;
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://www.bilibililike.top")
+                .addConverterFactory(GsonConverterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .build();
+        LoginService loginService = retrofit.create(LoginService.class);
+        loginService.login(username,password)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<UserBean>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(UserBean userBean) {
+                        isloging = false;
+                        if (set.isRunning()){
+                            set.cancel();
+                        }
+                        if (userBean.getCode() == 200 && userBean.getData() != null){
+                            userBean.getData().save();
+                            loginSuccess(userBean);
+                        }else {
+                            loginFailed(userBean.getMessage());
+                            tvRegister.performLongClick();
+                            Log.d("LoginActivity",userBean.getMessage());
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        isloging = false;
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        isloging = false;
+                    }
+                });
+    }
     /**
      * 输入框的动画效果
      *
@@ -106,7 +155,7 @@ public class LoginActivity extends BaseActivity {
                 .getLayoutParams();
         originML = param.leftMargin;
         originMR = param.rightMargin;
-        AnimatorSet set = new AnimatorSet();
+        set = new AnimatorSet();
 
         ValueAnimator animator = ValueAnimator.ofFloat(0, w);
         animator.addUpdateListener(animation -> {
@@ -152,7 +201,10 @@ public class LoginActivity extends BaseActivity {
 
             @Override
             public void onAnimationCancel(Animator animation) {
-
+                waveView.setVisibility(View.INVISIBLE);
+                progressBar.setVisibility(View.VISIBLE);
+                progressAnimator(progressBar);
+                cardInput.setVisibility(View.INVISIBLE);
             }
         });
 
@@ -212,6 +264,8 @@ public class LoginActivity extends BaseActivity {
         animator2.start();
 
 
+        edtPassword.setText("");
+
 
 
     }
@@ -232,6 +286,21 @@ public class LoginActivity extends BaseActivity {
                     * Math.sin((input - factor / 4) * (2 * Math.PI) / factor) + 1);
         }
     }
+
+    private void loginSuccess(UserBean userBean){
+        Intent intent = new Intent(LoginActivity.this,MainActivity.class);
+        intent.putExtra("nickname",userBean.getData().getNickname());
+        intent.putExtra("avatar",userBean.getData().getAvatar());
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+        finish();
+    }
+
+    private void loginFailed(String message){
+        //Toast.makeText(this,message,Toast.LENGTH_SHORT).show();
+        recovery();
+    }
+
 
 
 }

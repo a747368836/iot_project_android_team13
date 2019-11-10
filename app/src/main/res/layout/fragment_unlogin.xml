@@ -16,7 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="还没登录呢，你在想Peach!\n点我去登录！"
-        android:textSize="32sp"
+        android:textSize="24sp"
         android:layout_below="@id/img_main"
         android:layout_alignParentTop="true"
         android:layout_marginTop="@dimen/qb_px_480"

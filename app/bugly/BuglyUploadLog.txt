@@ -1,0 +1,4 @@
+file=/Users/xbs/Desktop/androidProject/iot/app/build/outputs/mapping/release/mapping.txt
+sha1=6fe931583f6ea0bf5c390186997fb609524ebee9
+appId=32d45c257c
+

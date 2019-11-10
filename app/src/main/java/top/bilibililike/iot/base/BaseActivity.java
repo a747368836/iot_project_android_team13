@@ -13,6 +13,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 
+import com.trello.rxlifecycle3.components.RxActivity;
+
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 

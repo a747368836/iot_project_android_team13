@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
@@ -13,18 +14,23 @@
     android:clickable="true"
     android:focusable="true"
     android:layout_marginBottom="@dimen/qb_px_8"
+    xmlns:tools="http://schemas.android.com/tools"
     >
+
     <LinearLayout
+        android:visibility="visible"
+        android:id="@+id/container_linear"
         android:padding="@dimen/qb_px_8"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         >
         <ImageView
+            android:id="@+id/img_icon"
             android:padding="@dimen/qb_px_16"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:src="@mipmap/ic_fan"
+            android:src="@mipmap/ic_current"
 
             />
         <TextView
@@ -34,17 +40,35 @@
             android:text="风扇"
             android:textColor="@color/colorBlack"
             android:textSize="18sp"
-            android:gravity="left"
+            android:gravity="center"
             />
         <TextView
             android:id="@+id/tv_type"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="14sp"
-            android:text="转速：30转/秒"
-            android:gravity="left"
+            android:gravity="center"
+            tools:text="转速：30转/秒"
             />
 
+    </LinearLayout>
+
+    <LinearLayout
+        android:visibility="invisible"
+        android:id="@+id/container_linear_back"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+        <TextView
+            android:id="@+id/back_tv_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:textSize="22sp"
+            tools:text="当前温度：32℃\n当前湿度：68%"
+            android:gravity="center"
+
+            />
     </LinearLayout>
 
 

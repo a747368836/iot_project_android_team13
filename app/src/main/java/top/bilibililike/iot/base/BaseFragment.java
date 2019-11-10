@@ -9,10 +9,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+
+import com.trello.rxlifecycle3.components.support.RxFragment;
+
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 
-public abstract class BaseFragment<T> extends Fragment {
+public abstract class BaseFragment<T> extends RxFragment {
     private Unbinder bind;
 
     @Override

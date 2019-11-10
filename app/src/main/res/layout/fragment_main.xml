@@ -5,7 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_above="@id/bottom_nav"
-    android:background="@color/colorWhite">
+    android:background="@mipmap/aqua_background"
+    >
+    <!--android:background="@color/colorWhite"-->
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appbar_layout"
@@ -163,15 +165,23 @@
                     android:textColor="@color/colorBlack" />
 
             </androidx.cardview.widget.CardView>
-
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/device_recycler_view"
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/colorWhite"
-                tools:listitem="@layout/item_device_card"
-                tools:itemCount="10" />
+                android:layout_height="wrap_content"
+                >
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/device_recycler_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/colorNull"
+                    tools:listitem="@layout/item_device_card"
+                    tools:itemCount="10" />
+                <include
+                    layout="@layout/layout_progress"
+                />
+            </RelativeLayout>
+
+
         </LinearLayout>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 

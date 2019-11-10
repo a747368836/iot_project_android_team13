@@ -1,69 +1,138 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorWhite"
+    android:background="#f6f6f6"
     android:clipChildren="false"
-    android:clipToPadding="false"
-    android:orientation="vertical">
+    android:clipToPadding="false">
 
-    <top.bilibililike.iot.view.BgView
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-
-        />
-
-    <de.hdodenhof.circleimageview.CircleImageView
-        android:id="@+id/avatar"
-        android:layout_width="@dimen/qb_px_96"
-        android:layout_height="@dimen/qb_px_96"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="@dimen/qb_px_32"
-        android:src="@drawable/ic_launcher" />
-
-    <TextView
-        android:id="@+id/tv_nickname"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/avatar"
-        android:gravity="center"
-        android:paddingTop="8dp"
-        android:text="nickname"
-        android:textColor="@color/colorWhite"
-        android:textSize="24sp"
-        tools:text="昵称" />
-
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/refresh_layout"
-        android:layout_below="@id/tv_nickname"
-        android:layout_marginTop="@dimen/qb_px_24"
-        android:paddingBottom="@dimen/qb_px_16"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
-        <include
-            layout="@layout/layout_card_device_num"
-
-            />
-
-
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/device_recycler_view"
+        android:layout_height="wrap_content">
+        <top.bilibililike.iot.view.BgView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@id/card_device_count"
-            android:background="@color/colorWhite"
-            tools:itemCount="10"
-            tools:listitem="@layout/item_device_card" />
-    </LinearLayout>
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+            android:layout_height="match_parent" />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-</RelativeLayout>
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/avatar"
+                android:layout_width="@dimen/qb_px_96"
+                android:layout_height="@dimen/qb_px_96"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="@dimen/qb_px_32"
+                android:src="@drawable/ic_launcher" />
+
+            <TextView
+                android:id="@+id/tv_nickname"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/avatar"
+                android:gravity="center"
+                android:paddingTop="8dp"
+                android:textColor="@color/colorWhite"
+                android:textSize="24sp"
+                tools:text="昵称" />
+
+            <top.bilibililike.iot.view.UserFragmentItem
+                android:id="@+id/item_detail_information"
+                android:layout_width="match_parent"
+                android:layout_height="76dp"
+                android:layout_below="@+id/tv_nickname"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginRight="5dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardCornerRadius="9dp"
+                app:itemIcon="@drawable/mine_ic_mine_info"
+                app:itemTitle="我的信息" />
+
+            <top.bilibililike.iot.view.UserFragmentItem
+                android:id="@+id/item_change_password"
+                android:layout_width="match_parent"
+                android:layout_height="66dp"
+                android:layout_below="@+id/item_detail_information"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginRight="5dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardCornerRadiusLowerLeft="-9dp"
+                app:cardCornerRadiusLowerRight="-9dp"
+                app:cardCornerRadiusUpperLeft="9dp"
+                app:cardCornerRadiusUpperRight="9dp"
+                app:itemTitle="修改密码"
+                app:itemIcon="@drawable/ic_mine_change_password"
+                app:shadowFlags="top|left|right" />
+
+            <top.bilibililike.iot.view.UserFragmentItem
+                android:id="@+id/item_connect_developer"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_below="@+id/item_change_password"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardCornerRadius="-9dp"
+                app:itemTitle="联系我们"
+                app:itemIcon="@drawable/ic_mine_contect_us"
+                app:shadowFlags="left|right" />
+
+            <top.bilibililike.iot.view.UserFragmentItem
+
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_below="@+id/item_connect_developer"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardCornerRadius="-9dp"
+
+                app:shadowFlags="left|right" />
+
+            <top.bilibililike.iot.view.UserFragmentItem
+                android:id="@+id/item_exit_login"
+                android:layout_width="match_parent"
+                android:layout_height="66dp"
+                android:layout_below="@+id/item_connect_developer"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardCornerRadiusLowerLeft="9dp"
+                app:cardCornerRadiusLowerRight="9dp"
+                app:cardCornerRadiusUpperLeft="-9dp"
+                app:cardCornerRadiusUpperRight="-9dp"
+                app:itemTitle="退出登录"
+                app:itemIcon="@drawable/ic_mine_logout"
+                app:shadowFlags="bottom|left|right" />
+
+            <top.bilibililike.iot.view.UserFragmentItem
+                android:id="@+id/mine_main_setting"
+                android:layout_width="match_parent"
+                android:layout_height="76dp"
+                android:layout_below="@id/item_exit_login"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="32dp"
+                android:layout_marginRight="5dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardCornerRadius="9dp"
+                app:itemIcon="@drawable/ic_mine_setting"
+                app:itemTitle="设置" />
+        </RelativeLayout>
+    </FrameLayout>
+</ScrollView>

@@ -2,37 +2,44 @@ package top.bilibililike.iot.widget;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.MenuItem;
-import android.view.View;
+import android.util.Log;
+import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.tencent.bugly.Bugly;
+
+import org.litepal.LitePal;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
 import top.bilibililike.iot.R;
 import top.bilibililike.iot.base.BaseActivity;
 import top.bilibililike.iot.base.BaseFragment;
+import top.bilibililike.iot.bean.UserBean;
+import top.bilibililike.iot.utils.Status;
 import top.bilibililike.iot.utils.ViewPagerAdapter;
+import top.bilibililike.iot.view.NotMoveViewPager;
 import top.bilibililike.iot.widget.fragment.MainFragment;
 import top.bilibililike.iot.widget.fragment.MineFragment;
+import top.bilibililike.iot.widget.fragment.NotLoginFragment;
 import top.bilibililike.iot.widget.fragment.SituationFragment;
 
 public class MainActivity extends BaseActivity {
 
 
     @BindView(R.id.fragment_container)
-    ViewPager viewPager;
+    NotMoveViewPager viewPager;
     @BindView(R.id.bottom_nav)
     BottomNavigationView bottomNav;
 
     List<BaseFragment> fragmentList ;
 
+    MineFragment mineFragment ;
+    UserBean.DataBean userBean;
     @Override
     public int getLayoutId() {
         return R.layout.activity_main;
@@ -40,16 +47,29 @@ public class MainActivity extends BaseActivity {
 
     @Override
     public void initViews(Bundle savedInstanceState) {
-        initViewpage();
-        initRecyclerView();
-
+        Bugly.init(this,"32d45c257c",true);
+        initIntent();
+        initViewpager();
     }
 
-    private void initViewpage(){
-        fragmentList = new ArrayList<>();
-        fragmentList.add(new MainFragment());
-        fragmentList.add(new SituationFragment());
-        fragmentList.add(new MineFragment());
+    private void initViewpager(){
+       // Toast.makeText(this,LitePal.sum(UserBean.DataBean.class,"id",Integer.class),Toast.LENGTH_SHORT).show();
+        UserBean.DataBean userBean = LitePal.findLast(UserBean.DataBean.class);
+        if (userBean != null && userBean.getAvatar() != null){
+            mineFragment = new MineFragment();
+            fragmentList = new ArrayList<>();
+            fragmentList.add(new MainFragment());
+            fragmentList.add(new SituationFragment());
+            fragmentList.add(mineFragment);
+        }else {
+            fragmentList = new ArrayList<>();
+            fragmentList.add(new NotLoginFragment());
+            fragmentList.add(new NotLoginFragment());
+            fragmentList.add(new NotLoginFragment());
+        }
+        Log.d("MainActivity",(userBean == null ? "userBean == null":"userBean != null") + "\ncount = "+LitePal.count(UserBean.DataBean.class));
+        viewPager.setOffscreenPageLimit(3);
+        viewPager.setNoScroll(true);
         viewPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager(),fragmentList));
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -84,11 +104,23 @@ public class MainActivity extends BaseActivity {
             }
             return true;
         });
-    }
-
-    private void initRecyclerView(){
 
     }
 
+    private void initIntent(){
+        Intent intent = getIntent();
+        userBean = new UserBean.DataBean();
+        String nickname = intent.getStringExtra("nickname");
+        String avatar = intent.getStringExtra("avatar");
+        if (nickname != null && !nickname.isEmpty() && avatar != null && !avatar.isEmpty()){
+            userBean.setNickname(nickname);
+            userBean.setAvatar(avatar);
+        }
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        finish();
+    }
 }

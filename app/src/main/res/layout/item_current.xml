@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="@dimen/qb_px_8"
+    app:cardElevation="@dimen/qb_px_15"
+    android:layout_marginStart="@dimen/qb_px_8"
+    android:layout_marginEnd="@dimen/qb_px_8"
+    android:layout_marginTop="@dimen/qb_px_8"
+    android:foreground="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:layout_marginBottom="@dimen/qb_px_8"
+    >
+    <LinearLayout
+        android:padding="@dimen/qb_px_8"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+        <ImageView
+            android:padding="@dimen/qb_px_16"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@mipmap/ic_current"
+            />
+        <TextView
+            android:id="@+id/tv_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="窗帘"
+            android:textColor="@color/colorBlack"
+            android:textSize="18sp"
+            android:gravity="left"
+            />
+
+        <TextView
+            android:id="@+id/tv_type"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:text="当前状态:半开"
+            android:gravity="left"
+            />
+
+    </LinearLayout>
+
+
+</androidx.cardview.widget.CardView>

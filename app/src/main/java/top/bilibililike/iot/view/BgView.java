@@ -71,9 +71,8 @@ public class BgView extends View {
     private void initPath(){
         // 初始化 路径对象
         path = new Path();
-        path.moveTo(0, 198*2 + 64);
-        path.quadTo(widthCount/2.0f,198*3,widthCount,198*2 + 64);
-        //path.rCubicTo(0, getY()+height/2.0f,widthCount/2.0f,getY()+height,widthCount,getY()+height/2.0f);
+        path.moveTo(0, 188*3 );
+        path.quadTo(widthCount/2.0f,168*4+84,widthCount,188*3 );
         path.lineTo(widthCount,0);
         path.lineTo(0,0);
         path.close();
