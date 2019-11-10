@@ -53,22 +53,19 @@ public class MainActivity extends BaseActivity {
     }
 
     private void initViewpager(){
-       // Toast.makeText(this,LitePal.sum(UserBean.DataBean.class,"id",Integer.class),Toast.LENGTH_SHORT).show();
         UserBean.DataBean userBean = LitePal.findLast(UserBean.DataBean.class);
         if (userBean != null && userBean.getAvatar() != null){
             mineFragment = new MineFragment();
             fragmentList = new ArrayList<>();
             fragmentList.add(new MainFragment());
-            fragmentList.add(new SituationFragment());
             fragmentList.add(mineFragment);
         }else {
             fragmentList = new ArrayList<>();
             fragmentList.add(new NotLoginFragment());
             fragmentList.add(new NotLoginFragment());
-            fragmentList.add(new NotLoginFragment());
         }
         Log.d("MainActivity",(userBean == null ? "userBean == null":"userBean != null") + "\ncount = "+LitePal.count(UserBean.DataBean.class));
-        viewPager.setOffscreenPageLimit(3);
+        viewPager.setOffscreenPageLimit(2);
         viewPager.setNoScroll(true);
         viewPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager(),fragmentList));
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
@@ -80,7 +77,6 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onPageSelected(int position) {
                 int id = position == 0 ? R.id.nav_home : position == 1
-                        ? R.id.nav_room : position == 2
                         ? R.id.nav_mine :R.id.nav_home;
                 bottomNav.setSelectedItemId(id);
             }
@@ -95,11 +91,8 @@ public class MainActivity extends BaseActivity {
                 case R.id.nav_home:
                     viewPager.setCurrentItem(0,false);
                     break;
-                case R.id.nav_room:
-                    viewPager.setCurrentItem(1,false);
-                    break;
                 case R.id.nav_mine:
-                    viewPager.setCurrentItem(2,false);
+                    viewPager.setCurrentItem(1,false);
                     break;
             }
             return true;

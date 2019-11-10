@@ -2,25 +2,20 @@ package top.bilibililike.iot.widget.fragment;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 
+import java.util.ArrayList;
 import java.util.List;
 
-
 import butterknife.BindView;
-import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
@@ -30,38 +25,34 @@ import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import top.bilibililike.iot.R;
 import top.bilibililike.iot.adapter.DeviceRecyAdapter;
+import top.bilibililike.iot.adapter.InfoRecyAdapter;
 import top.bilibililike.iot.base.BaseFragment;
 import top.bilibililike.iot.bean.ClimateBean;
 import top.bilibililike.iot.bean.DeviceBean;
 import top.bilibililike.iot.bean.PostBackBean;
 import top.bilibililike.iot.http.DeviceService;
 import top.bilibililike.iot.utils.ControlCallback;
+import top.bilibililike.iot.utils.ToastUtil;
 
 public class MainFragment extends BaseFragment implements ControlCallback {
     @BindView(R.id.device_recycler_view)
     RecyclerView deviceRecyclerView;
     @BindView(R.id.progress_bar)
     LinearLayout progressBar;
-    @BindView(R.id.tv_temperature)
-    TextView tvTemperature;
-    @BindView(R.id.tv_humidity)
-    TextView tvHumidity;
-    @BindView(R.id.tv_device_count)
-    TextView tvDeviceCount;
+    @BindView(R.id.recycler_info)
+    RecyclerView recyclerInfo;
 
-    private DeviceRecyAdapter adapter;
+
+    private DeviceRecyAdapter deviceAdapter;
+    private InfoRecyAdapter infoAdapter;
     @BindView(R.id.toolbar)
     Toolbar toolbar;
     @BindView(R.id.collapsing_toolbar)
     CollapsingToolbarLayout collapsingToolbar;
     @BindView(R.id.appbar_layout)
     AppBarLayout appbarLayout;
-    @BindView(R.id.img_background)
-    ImageView imgBackground;
-    @BindView(R.id.info_container)
-    RelativeLayout infoContainer;
-    @BindView(R.id.refresh_layout)
-    SwipeRefreshLayout refreshLayout;
+
+
 
     private ClimateBean.DataBean climateTrueBean;
 
@@ -71,7 +62,9 @@ public class MainFragment extends BaseFragment implements ControlCallback {
     public void finishCreateView(Bundle state) {
         progressBar.setVisibility(View.VISIBLE);
         initToolbar();
+        initInfoRecyclerView();
         initData();
+        getClimateData();
     }
 
     @Override
@@ -84,47 +77,23 @@ public class MainFragment extends BaseFragment implements ControlCallback {
 
     }
 
-    private void initRecyclerView(List<DeviceBean.DataBean> dataBeans) {
-        adapter = new DeviceRecyAdapter(getActivity(), dataBeans,this);
-        deviceRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 2));
-        deviceRecyclerView.setAdapter(adapter);
-        refreshLayout.setColorSchemeColors(getResources().getColor(R.color.colorAccent));
-        refreshLayout.setOnRefreshListener(this::getDeviceData);
-        getClimateData();
+    private void initDeviceRecyclerView(List<DeviceBean.DataBean> dataBeans) {
+        deviceAdapter = new DeviceRecyAdapter(getActivity(), dataBeans, this);
+        deviceRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
+        deviceRecyclerView.setAdapter(deviceAdapter);
+    }
+
+    private void initInfoRecyclerView() {
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(getActivity(),2);
+        gridLayoutManager.setOrientation(GridLayoutManager.HORIZONTAL);
+        recyclerInfo.setLayoutManager(gridLayoutManager);
+        infoAdapter = new InfoRecyAdapter(getActivity(),climateTrueBean);
+        recyclerInfo.setAdapter(infoAdapter);
+
     }
 
     private void initToolbar() {
-        toolbar.setTitle("常用设备");
-        //collapsingToolbar.setExpandedTitleTextAppearance(R.style.TextAppearance_AppCompat);
-        //collapsingToolbar.setExpandedTitleTextAppearance(R.style.TextAppearance_MaterialComponents_Subtitle2);
-        /*appbarLayout.addOnOffsetChangedListener(new AppBarStateChangeListener() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
-            @Override
-            public void onStateChanged(AppBarLayout appBarLayout, State state) {
-                if (state == State.EXPANDED) {
-                    //展开
-                    infoContainer.setVisibility(View.VISIBLE);
-                    imgBackground.setVisibility(View.VISIBLE);
-                    toolbar.setVisibility(View.INVISIBLE);
-
-                } else if (state == State.COLLAPSED) {
-                    //折叠状态
-                    infoContainer.setVisibility(View.INVISIBLE);
-                    imgBackground.setVisibility(View.INVISIBLE);
-
-                    toolbar.setVisibility(View.VISIBLE);
-                    toolbar.setTitle("常用设备");
-
-                } else {
-                    //中间状态
-                    infoContainer.setVisibility(View.INVISIBLE);
-                    imgBackground.setVisibility(View.INVISIBLE);
-                    toolbar.setVisibility(View.VISIBLE);
-
-
-                }
-            }
-        });*/
+        toolbar.setTitle("我的家");
     }
 
     private void initData() {
@@ -148,8 +117,13 @@ public class MainFragment extends BaseFragment implements ControlCallback {
 
                     @Override
                     public void onNext(List<DeviceBean.DataBean> dataBeans) {
-                        tvDeviceCount.setText("当前可用设备数："+dataBeans.size());
-                        initRecyclerView(dataBeans);
+                        List<DeviceBean.DataBean> dataBean = new ArrayList<>();
+                        for (int i = 0; i < dataBeans.size(); i++) {
+                            if (!dataBeans.get(i).getType().equals("climate")){
+                                dataBean.add(dataBeans.get(i));
+                            }
+                        }
+                        initDeviceRecyclerView(dataBean);
                         progressBar.setVisibility(View.INVISIBLE);
                     }
 
@@ -163,6 +137,7 @@ public class MainFragment extends BaseFragment implements ControlCallback {
 
                     }
                 });
+
 
 
     }
@@ -181,11 +156,11 @@ public class MainFragment extends BaseFragment implements ControlCallback {
                     @Override
                     public void onNext(DeviceBean deviceBean) {
                         progressBar.setVisibility(View.INVISIBLE);
-                        adapter = new DeviceRecyAdapter(getActivity(),deviceBean.getData(),MainFragment.this);
-                        deviceRecyclerView.setAdapter(adapter);
-                        //adapter.refreshData(deviceBean);
+                        deviceAdapter = new DeviceRecyAdapter(getActivity(), deviceBean.getData(), MainFragment.this);
+                        deviceRecyclerView.setAdapter(deviceAdapter);
+                        //deviceAdapter.refreshData(deviceBean);
                         deviceRecyclerView.setVisibility(View.VISIBLE);
-                        refreshLayout.setRefreshing(false);
+
                         climateTrueBean = null;
                     }
 
@@ -201,11 +176,10 @@ public class MainFragment extends BaseFragment implements ControlCallback {
                 });
     }
 
-    private void getClimateData() {
-
+    private void getClimateData(){
         deviceService.getClimate()
                 .compose(bindToLifecycle())
-                .repeat(2000)
+                .repeat(5000)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<ClimateBean>() {
@@ -216,26 +190,21 @@ public class MainFragment extends BaseFragment implements ControlCallback {
 
                     @Override
                     public void onNext(ClimateBean climateBean) {
-                        if (tvTemperature != null && tvHumidity != null){
-                            tvTemperature.setText(climateBean.getData().get(0).getTemperature());
-                            tvHumidity.setText(climateBean.getData().get(0).getHumidity());
+                        ClimateBean.DataBean dataBean = climateBean.getData().get(0);
+                        if (climateTrueBean == null) {
+                            climateTrueBean = dataBean;
+                            infoAdapter.refreshData(dataBean);
+                            return;
                         }
-                        if (climateBean.getCode() == 200) {
-                            if (climateTrueBean == null) {
-                                climateTrueBean = climateBean.getData().get(0);
-                                adapter.refreshData(climateBean.getData().get(0));
-                            } else {
-                                if (climateTrueBean.getHumidity().equals(climateBean.getData().get(0).getHumidity())
-                                        && climateTrueBean.getTemperature().equals(climateBean.getData().get(0).getTemperature())) {
+                        if (climateTrueBean.getHumidity().equals(dataBean.getHumidity())
+                            && climateTrueBean.getTemperature().equals(dataBean.getTemperature())
+                            && climateTrueBean.getSmoke().equals(dataBean.getSmoke())){
 
-                                } else {
-                                    climateTrueBean = climateBean.getData().get(0);
-                                    adapter.refreshData(climateBean.getData().get(0));
-                                }
-                            }
-
-
+                        }else {
+                            infoAdapter.refreshData(dataBean);
+                            climateTrueBean = dataBean;
                         }
+
                     }
 
                     @Override
@@ -248,12 +217,13 @@ public class MainFragment extends BaseFragment implements ControlCallback {
 
                     }
                 });
+
     }
+
 
     @Override
     public void ledTwinkle(String object) {
-        Toast.makeText(getActivity(),"ledTwinkle "+object,Toast.LENGTH_SHORT).show();
-        deviceService.postCache("put",object,"flash") .subscribeOn(Schedulers.io())
+        deviceService.postCache("put", object, "flash").subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<PostBackBean>() {
                     @Override
@@ -263,10 +233,10 @@ public class MainFragment extends BaseFragment implements ControlCallback {
 
                     @Override
                     public void onNext(PostBackBean postBackBean) {
-                        if (postBackBean.getCode() == 200){
-                            Toast.makeText(getActivity(),"LED闪烁成功",Toast.LENGTH_SHORT).show();
-                        }else {
-                            Toast.makeText(getActivity(),postBackBean.getMessage(),Toast.LENGTH_SHORT).show();
+                        if (postBackBean.getCode() == 200) {
+                            ToastUtil.show("LED闪烁成功");
+                        } else {
+                            ToastUtil.show(postBackBean.getMessage());
                         }
                     }
 
@@ -284,9 +254,7 @@ public class MainFragment extends BaseFragment implements ControlCallback {
 
     @Override
     public void ledChange(String object) {
-        Toast.makeText(getActivity(),"ledChange "+object,Toast.LENGTH_SHORT).show();
-
-        deviceService.postCache("put",object,"switch")
+        deviceService.postCache("put", object, "switch")
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<PostBackBean>() {
@@ -297,10 +265,10 @@ public class MainFragment extends BaseFragment implements ControlCallback {
 
                     @Override
                     public void onNext(PostBackBean postBackBean) {
-                        if (postBackBean.getCode() == 200){
-                            Toast.makeText(getActivity(),"LED切换成功",Toast.LENGTH_SHORT).show();
-                        }else {
-                            Toast.makeText(getActivity(),postBackBean.getMessage(),Toast.LENGTH_SHORT).show();
+                        if (postBackBean.getCode() == 200) {
+                            ToastUtil.show("LED切换成功");
+                        } else {
+                            ToastUtil.show(postBackBean.getMessage());
                         }
                     }
 
@@ -318,7 +286,7 @@ public class MainFragment extends BaseFragment implements ControlCallback {
 
     @Override
     public void currentControl(String order) {
-        deviceService.postCache("put","current",order)
+        deviceService.postCache("put", "current", order)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<PostBackBean>() {
@@ -329,16 +297,16 @@ public class MainFragment extends BaseFragment implements ControlCallback {
 
                     @Override
                     public void onNext(PostBackBean postBackBean) {
-                        if (postBackBean.getCode() == 200){
-                            Toast.makeText(getActivity(),"窗帘控制成功",Toast.LENGTH_SHORT).show();
-                        }else {
-                            Toast.makeText(getActivity(),postBackBean.getMessage(),Toast.LENGTH_SHORT).show();
+                        if (postBackBean.getCode() == 200) {
+                            ToastUtil.show("窗帘"+order+"成功");
+                        } else {
+                            ToastUtil.show(postBackBean.getMessage());
                         }
                     }
 
                     @Override
                     public void onError(Throwable e) {
-
+                        ToastUtil.show(e.toString());
                     }
 
                     @Override
@@ -351,8 +319,8 @@ public class MainFragment extends BaseFragment implements ControlCallback {
     @Override
     public void fanControl(int id, String order) {
 
-        if (id == 0){
-            deviceService.postCache("put","fan0",order)
+        if (id == 0) {
+            deviceService.postCache("put", "fan0", order)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Observer<PostBackBean>() {
@@ -363,8 +331,8 @@ public class MainFragment extends BaseFragment implements ControlCallback {
 
                         @Override
                         public void onNext(PostBackBean postBackBean) {
-                            if (postBackBean.getCode() == 200){
-                                Toast.makeText(getActivity(),"排风扇控制成功",Toast.LENGTH_SHORT).show();
+                            if (postBackBean.getCode() == 200) {
+                                ToastUtil.show("排风扇"+order+"成功");
                             }
                         }
 
@@ -378,8 +346,8 @@ public class MainFragment extends BaseFragment implements ControlCallback {
 
                         }
                     });
-        }else {
-            deviceService.postCache("put","fan1",order)
+        } else {
+            deviceService.postCache("put", "fan1", order)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Observer<PostBackBean>() {
@@ -390,8 +358,8 @@ public class MainFragment extends BaseFragment implements ControlCallback {
 
                         @Override
                         public void onNext(PostBackBean postBackBean) {
-                            if (postBackBean.getCode() == 200){
-                                Toast.makeText(getActivity(),"散热器控制成功",Toast.LENGTH_SHORT).show();
+                            if (postBackBean.getCode() == 200) {
+                                ToastUtil.show("散热器"+order+"成功");
                             }
                         }
 
@@ -406,6 +374,37 @@ public class MainFragment extends BaseFragment implements ControlCallback {
                         }
                     });
         }
+
+    }
+
+    @Override
+    public void alarmControl(String order) {
+        deviceService.postCache("put", "alarm", order)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<PostBackBean>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(PostBackBean postBackBean) {
+                        if (postBackBean.getCode() == 200) {
+                            ToastUtil.show("报警器"+order+"成功");
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
 
     }
 }

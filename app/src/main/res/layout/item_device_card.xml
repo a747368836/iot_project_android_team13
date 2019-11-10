@@ -28,48 +28,32 @@
         <ImageView
             android:id="@+id/img_icon"
             android:padding="@dimen/qb_px_16"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="@dimen/qb_px_64"
+            android:layout_height="@dimen/qb_px_64"
             android:src="@mipmap/ic_current"
-
             />
         <TextView
+            android:layout_marginLeft="16dp"
             android:id="@+id/tv_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="风扇"
+            android:text="开"
             android:textColor="@color/colorBlack"
             android:textSize="18sp"
-            android:gravity="center"
+            android:gravity="left"
             />
         <TextView
+            android:layout_marginLeft="16dp"
             android:id="@+id/tv_type"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="14sp"
-            android:gravity="center"
-            tools:text="转速：30转/秒"
+            android:gravity="left"
+            tools:text="排气扇"
             />
 
     </LinearLayout>
 
-    <LinearLayout
-        android:visibility="invisible"
-        android:id="@+id/container_linear_back"
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
-        <TextView
-            android:id="@+id/back_tv_content"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:textSize="22sp"
-            tools:text="当前温度：32℃\n当前湿度：68%"
-            android:gravity="center"
-
-            />
-    </LinearLayout>
 
 
 </androidx.cardview.widget.CardView>

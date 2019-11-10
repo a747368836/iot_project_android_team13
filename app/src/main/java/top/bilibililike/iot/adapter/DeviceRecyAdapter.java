@@ -1,6 +1,7 @@
 package top.bilibililike.iot.adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,11 +9,11 @@ import android.view.animation.AnticipateOvershootInterpolator;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 
 import java.util.List;
 
@@ -23,6 +24,8 @@ import top.bilibililike.iot.R;
 import top.bilibililike.iot.bean.ClimateBean;
 import top.bilibililike.iot.bean.DeviceBean;
 import top.bilibililike.iot.utils.ControlCallback;
+import top.bilibililike.iot.utils.OnDoubleClickListener;
+import top.bilibililike.iot.utils.ToastUtil;
 import top.bilibililike.iot.utils.animation.FlipCardAnimation;
 
 public class DeviceRecyAdapter extends RecyclerView.Adapter<DeviceRecyAdapter.ViewHolder> {
@@ -31,8 +34,7 @@ public class DeviceRecyAdapter extends RecyclerView.Adapter<DeviceRecyAdapter.Vi
     private Context mContext;
     private List<DeviceBean.DataBean> deviceList;
     private Unbinder unbinder;
-    private ClimateBean.DataBean climateBean;
-    private int[] climatePosition;
+    private ViewHolder holder;
 
     private ControlCallback controler;
 
@@ -40,20 +42,7 @@ public class DeviceRecyAdapter extends RecyclerView.Adapter<DeviceRecyAdapter.Vi
         this.mContext = context;
         this.deviceList = deviceList;
         this.controler = callback;
-        int climateNum = 0;
-        for (int i = 0; i < deviceList.size(); i++) {
-            if (deviceList.get(i).getType().equals("climate")) {
-                climateNum++;
-            }
-        }
-        climatePosition = new int[climateNum];
-        climateNum = 0;
-        for (int i = 0; i < deviceList.size(); i++) {
-            if (deviceList.get(i).getType().equals("climate")) {
-                climatePosition[climateNum] = i;
-                climateNum++;
-            }
-        }
+
 
     }
 
@@ -67,56 +56,154 @@ public class DeviceRecyAdapter extends RecyclerView.Adapter<DeviceRecyAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        if (this.holder == null){
+            this.holder = holder;
+        }
         DeviceBean.DataBean dataBean = deviceList.get(position);
         if (dataBean.getType().equals("light")) {
-            Glide.with(mContext)
-                    .load(mContext.getDrawable(R.mipmap.ic_light))
-                    .into(holder.imgIcon);
+            holder.tvName.setText("关");
+            holder.tvType.setText(dataBean.getObject());
+            holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
+            holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_light_off));
             holder.itemView.setOnClickListener(v -> {
-                controler.ledChange(dataBean.getType());
+                    controler.ledChange(dataBean.getType());
+                    holder.tvName.setText("开启");
+                    holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_light_on));
+                    holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_selected));
             });
             holder.itemView.setOnLongClickListener(v -> {
-                controler.ledTwinkle(dataBean.getType());
-                return false;
+                if (holder.tvName.getText().toString().equals("闪烁")){
+                    controler.ledChange(dataBean.getType());
+                    holder.tvName.setText("关闭");
+                    holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_light_off));
+                    holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
+                }else {
+                    controler.ledTwinkle(dataBean.getType());
+                    holder.tvName.setText("闪烁");
+                    holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_light_on));
+                    holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_selected));
+                }
+
+                return true;
             });
         } else if (dataBean.getType().equals("current")) {
-            Glide.with(mContext)
-                    .load(mContext.getDrawable(R.mipmap.ic_current))
-                    .into(holder.imgIcon);
+            holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
+            holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_curtain_close));
+            holder.tvName.setText("关");
+            holder.tvType.setText(dataBean.getObject());
+            holder.itemView.setOnClickListener(v -> {
+                holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_selected));
+                if (holder.tvName.getText().toString().equals("关")){
+                    holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_curtain_on_full));
+                    holder.tvName.setText("全开");
+                    controler.currentControl("full");
+                }else if (holder.tvName.getText().toString().equals("全开")){
+                    holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_curtain_on_half));
+                    holder.tvName.setText("半开");
+                    controler.currentControl("half");
+                }else if (holder.tvName.getText().toString().equals("半开")){
+                    holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
+                    holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_curtain_close));
+                    holder.tvName.setText("关");
+                    controler.currentControl("close");
+                }
+            });
+
+            holder.itemView.setOnLongClickListener( v -> {
+                holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
+                holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_curtain_close));
+                holder.tvName.setText("关");
+                controler.currentControl("close");
+                return true;
+            });
+
 
 
         } else if (dataBean.getType().equals("fan0")) {
-            Glide.with(mContext)
-                    .load(mContext.getDrawable(R.mipmap.ic_fan))
-                    .into(holder.imgIcon);
-
-
+            holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
+            holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_fan_off));
+            holder.tvName.setText("关");
+            holder.tvType.setText(dataBean.getObject());
+            holder.itemView.setOnClickListener(v->{
+                holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_selected));
+                holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_fan_on));
+                if (holder.tvName.getText().toString().equals("关")){
+                    holder.tvName.setText("一档");
+                    controler.fanControl(0,"1");
+                }else if (holder.tvName.getText().toString().equals("一档")){
+                    holder.tvName.setText("二档");
+                    controler.fanControl(0,"2");
+                }else if (holder.tvName.getText().toString().equals("二档")){
+                    holder.tvName.setText("三档");
+                    controler.fanControl(0,"3");
+                }else if (holder.tvName.getText().toString().equals("三档")){
+                    holder.tvName.setText("关");
+                    controler.fanControl(0,"off");
+                    holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
+                    holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_fan_off));
+                }
+            });
         } else if (dataBean.getType().equals("fan1")) {
-            Glide.with(mContext)
-                    .load(mContext.getDrawable(R.mipmap.ic_fan))
-                    .into(holder.imgIcon);
+            holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
+            holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_fan_off));
+            holder.tvName.setText("关");
+            holder.tvType.setText(dataBean.getObject());
+            holder.itemView.setOnClickListener(v->{
+                holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_selected));
+                holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_fan_on));
+                if (holder.tvName.getText().toString().equals("关")){
+                    holder.tvName.setText("一档");
+                    controler.fanControl(1,"1");
+                }else if (holder.tvName.getText().toString().equals("一档")){
+                    holder.tvName.setText("二档");
+                    controler.fanControl(1,"2");
+                }else if (holder.tvName.getText().toString().equals("二档")){
+                    holder.tvName.setText("三档");
+                    controler.fanControl(1,"3");
+                }else if (holder.tvName.getText().toString().equals("三档")){
+                    holder.tvName.setText("关");
+                    controler.fanControl(1,"off");
+                    holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
+                    holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_fan_off));
+                }
+            });
+        }else if (dataBean.getType().equals("alarm")) {
+            holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
+            holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_alarm_off));
+            holder.tvName.setText("关");
+            holder.tvType.setText(dataBean.getObject());
+
+            holder.itemView.setOnClickListener( v-> {
+                holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_selected));
+                holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_alarm_on));
+                if (holder.tvName.getText().toString().equals("关")){
+                    holder.tvName.setText("报警中");
+                    controler.alarmControl("on");
+                }else{
+                    holder.tvName.setText("关");
+                    controler.alarmControl("off");
+                    holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
+                }
 
 
-        } else if (dataBean.getType().equals("climate")) {
-            holder.itemView.setOnClickListener(v -> holder.itemView.startAnimation(
-                    getAnimation(holder.itemView, holder.containerLinear, holder.containerLinearBack)));
-            if (climateBean != null) {
-                holder.backTvContent.setText("当前温度:" + climateBean.getTemperature() + "°C\n"
-                        + "当前湿度:" + climateBean.getHumidity() + "%\n"
-                        + "烟雾浓度：" + climateBean.getSmoke() + "%"
-                );
-            } else {
-                holder.backTvContent.setText("暂未采集到温湿度信息");
-            }
-            Glide.with(mContext)
-                    .load(mContext.getDrawable(R.mipmap.ic_climate))
-                    .into(holder.imgIcon);
-        } else if (dataBean.getType().equals("alarm")) {
-            Glide.with(mContext)
-                    .load(mContext.getDrawable(R.mipmap.ic_alarm))
-                    .into(holder.imgIcon);
+
+            });
+
+            holder.itemView.setOnLongClickListener( v-> {
+                holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_alarm_on));
+                holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_selected));
+                if (holder.tvName.getText().toString().equals("关")){
+                    holder.tvName.setText("间隔报警");
+
+                }else{
+                    holder.tvName.setText("关");
+                    controler.alarmControl("off");
+                    holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
+                }
+                return true;
+            });
+
         }
-        holder.tvName.setText(dataBean.getObject());
 
 
     }
@@ -133,35 +220,31 @@ public class DeviceRecyAdapter extends RecyclerView.Adapter<DeviceRecyAdapter.Vi
     class ViewHolder extends RecyclerView.ViewHolder {
         @BindView(R.id.container_linear)
         LinearLayout containerLinear;
-        @BindView(R.id.container_linear_back)
-        LinearLayout containerLinearBack;
+
         @BindView(R.id.img_icon)
         ImageView imgIcon;
         @BindView(R.id.tv_name)
         TextView tvName;
         @BindView(R.id.tv_type)
         TextView tvType;
-        @BindView(R.id.back_tv_content)
-        TextView backTvContent;
+
 
         FlipCardAnimation animation;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             unbinder = ButterKnife.bind(this, itemView);
-
-
+            itemView.setAlpha(0.95f);
         }
     }
 
 
     public void unbind() {
-        unbinder.unbind();
+        if (unbinder != null){
+            unbinder.unbind();
+        }
     }
 
-    public Unbinder getBinder() {
-        return unbinder;
-    }
 
     public void refreshData(DeviceBean deviceBean) {
         if (deviceBean.getData() != null) {
@@ -170,12 +253,6 @@ public class DeviceRecyAdapter extends RecyclerView.Adapter<DeviceRecyAdapter.Vi
         notifyDataSetChanged();
     }
 
-    public void refreshData(ClimateBean.DataBean climateBean) {
-        this.climateBean = climateBean;
-        for (int i = 0; i < climatePosition.length; i++) {
-            notifyItemChanged(climatePosition[i]);
-        }
-    }
 
 
     public FlipCardAnimation getAnimation(View itemView, View container, View backView) {

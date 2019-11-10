@@ -1,9 +1,12 @@
 package top.bilibililike.iot.widget.fragment;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
+
 
 import com.bumptech.glide.Glide;
 
@@ -14,6 +17,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import top.bilibililike.iot.R;
 import top.bilibililike.iot.base.BaseFragment;
 import top.bilibililike.iot.bean.UserBean;
+import top.bilibililike.iot.utils.ToastUtil;
 import top.bilibililike.iot.view.UserFragmentItem;
 import top.bilibililike.iot.widget.MainActivity;
 
@@ -62,6 +66,16 @@ public class MineFragment extends BaseFragment {
         }
     }
 
+    public void joinQQGroup(String key) {
+        Intent intent = new Intent();
+        intent.setData(Uri.parse("mqqopensdkapi://bizAgent/qm/qr?url=http%3A%2F%2Fqm.qq.com%2Fcgi-bin%2Fqm%2Fqr%3Ffrom%3Dapp%26p%3Dandroid%26k%3D" + key));
+        try {
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(getActivity(),"您还没有安装QQ，请先安装软件",Toast.LENGTH_SHORT).show();
+        }
+    }
+
 
     private void initView() {
         if (userBean != null) {
@@ -78,6 +92,23 @@ public class MineFragment extends BaseFragment {
             getActivity().startActivity(intent);
             getActivity().finish();
         });
+
+        itemConnectDeveloper.setOnClickListener( v -> {
+            joinQQGroup("v3vqrhaKYOz8qWWWmZeJvAgVIOESjFKU");
+        });
+
+        mineMainSetting.setOnClickListener( v -> {
+            ToastUtil.show("暂未开放");
+        });
+
+        itemDetailInformation.setOnClickListener( v -> {
+            ToastUtil.show("暂未开放");
+        });
+        itemChangePassword.setOnClickListener( v -> {
+            ToastUtil.show("暂未开放");
+        });
+
+
 
     }
 }

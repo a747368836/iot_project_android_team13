@@ -40,6 +40,7 @@ import top.bilibililike.iot.base.BaseActivity;
 import top.bilibililike.iot.bean.UserBean;
 import top.bilibililike.iot.http.LoginService;
 import top.bilibililike.iot.utils.Status;
+import top.bilibililike.iot.utils.ToastUtil;
 import top.bilibililike.iot.view.WaveView;
 
 public class LoginActivity extends BaseActivity {
@@ -288,6 +289,7 @@ public class LoginActivity extends BaseActivity {
     }
 
     private void loginSuccess(UserBean userBean){
+        ToastUtil.show("登录成功");
         Intent intent = new Intent(LoginActivity.this,MainActivity.class);
         intent.putExtra("nickname",userBean.getData().getNickname());
         intent.putExtra("avatar",userBean.getData().getAvatar());

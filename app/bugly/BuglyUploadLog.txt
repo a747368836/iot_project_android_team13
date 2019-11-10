@@ -2,3 +2,19 @@ file=/Users/xbs/Desktop/androidProject/iot/app/build/outputs/mapping/release/map
 sha1=6fe931583f6ea0bf5c390186997fb609524ebee9
 appId=32d45c257c
 
+file=/Users/xbs/Desktop/androidProject/iot/app/build/outputs/mapping/release/mapping.txt
+sha1=002154acba6d58a0a347e5ac616414c527dc5870
+appId=32d45c257c
+
+file=/Users/xbs/Desktop/androidProject/iot/app/build/outputs/mapping/release/mapping.txt
+sha1=002154acba6d58a0a347e5ac616414c527dc5870
+appId=32d45c257c
+
+file=/Users/xbs/Desktop/androidProject/iot/app/build/outputs/mapping/release/mapping.txt
+sha1=002154acba6d58a0a347e5ac616414c527dc5870
+appId=32d45c257c
+
+file=/Users/xbs/Desktop/androidProject/iot/app/build/outputs/mapping/release/mapping.txt
+sha1=0df0dcd14d19f6743c6f7ea9b823a9e7c9880fe4
+appId=32d45c257c
+

@@ -9,5 +9,7 @@ public interface ControlCallback {
 
     void fanControl(int id,String order);
 
+    void alarmControl(String order);
+
 
 }
