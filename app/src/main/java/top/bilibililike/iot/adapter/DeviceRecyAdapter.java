@@ -94,14 +94,14 @@ public class DeviceRecyAdapter extends RecyclerView.Adapter<DeviceRecyAdapter.Vi
             holder.itemView.setOnClickListener(v -> {
                 holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_selected));
                 if (holder.tvName.getText().toString().equals("关")){
-                    holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_curtain_on_full));
-                    holder.tvName.setText("全开");
-                    controler.currentControl("full");
-                }else if (holder.tvName.getText().toString().equals("全开")){
                     holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_curtain_on_half));
                     holder.tvName.setText("半开");
                     controler.currentControl("half");
                 }else if (holder.tvName.getText().toString().equals("半开")){
+                    holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_curtain_on_full));
+                    holder.tvName.setText("全开");
+                    controler.currentControl("full");
+                }else if (holder.tvName.getText().toString().equals("全开")){
                     holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
                     holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_curtain_close));
                     holder.tvName.setText("关");
@@ -143,6 +143,16 @@ public class DeviceRecyAdapter extends RecyclerView.Adapter<DeviceRecyAdapter.Vi
                     holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_fan_off));
                 }
             });
+            holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    holder.tvName.setText("关");
+                    controler.fanControl(0,"off");
+                    holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
+                    holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_fan_off));
+                    return true;
+                }
+            });
         } else if (dataBean.getType().equals("fan1")) {
             holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
             holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_fan_off));
@@ -167,6 +177,16 @@ public class DeviceRecyAdapter extends RecyclerView.Adapter<DeviceRecyAdapter.Vi
                     holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_fan_off));
                 }
             });
+            holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    holder.tvName.setText("关");
+                    controler.fanControl(1,"off");
+                    holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
+                    holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_fan_off));
+                    return true;
+                }
+            });
         }else if (dataBean.getType().equals("alarm")) {
             holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
             holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_alarm_off));
@@ -182,22 +202,22 @@ public class DeviceRecyAdapter extends RecyclerView.Adapter<DeviceRecyAdapter.Vi
                 }else{
                     holder.tvName.setText("关");
                     controler.alarmControl("off");
+                    holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_alarm_off));
                     holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
                 }
-
-
-
             });
 
             holder.itemView.setOnLongClickListener( v-> {
                 holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_alarm_on));
                 holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_selected));
                 if (holder.tvName.getText().toString().equals("关")){
+                    controler.alarmControl("interval");
                     holder.tvName.setText("间隔报警");
 
                 }else{
                     holder.tvName.setText("关");
                     controler.alarmControl("off");
+                    holder.imgIcon.setImageDrawable(mContext.getDrawable(R.mipmap.ic_alarm_off));
                     holder.itemView.setBackground(mContext.getResources().getDrawable(R.drawable.bg_unselected));
                 }
                 return true;

@@ -2,7 +2,7 @@ package top.bilibililike.iot.bean;
 
 import java.util.List;
 
-public class ClimateBean extends DeviceBaseBean {
+public class ClimateBean {
 
 
     /**

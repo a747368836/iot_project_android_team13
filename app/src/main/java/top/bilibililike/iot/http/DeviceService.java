@@ -15,13 +15,6 @@ public interface DeviceService {
     @GET("/iot/device/index.php")
     Observable<DeviceBean> getDevices();
 
-  /*  @POST
-    @FormUrlEncoded
-    Observable<PostBackBean> post(@Field("mode") String mode,
-                                  @Field("object") String object,
-                                  @Field("type") String type,
-                                  @Field("stamp") String stamp
-                                  );*/
     @GET("/iot/index.php")
     Observable<ClimateBean> getClimate();
 
@@ -31,9 +24,5 @@ public interface DeviceService {
                                         @Field("object") String object,
                                         @Field("order") String order
                                         );
-
-
-
-
 
 }

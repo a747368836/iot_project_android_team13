@@ -10,7 +10,6 @@
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/bottom_nav"
         >
 
     </top.bilibililike.iot.view.NotMoveViewPager>
@@ -20,12 +19,14 @@
         android:id="@+id/bottom_nav"
         android:layout_width="match_parent"
         android:layout_height="@dimen/qb_px_64"
-        android:alpha="0.97"
+        android:alpha="0.8"
         android:background="#ffffff"
         app:elevation="0dp"
         app:itemBackground="?attr/selectableItemBackground"
         app:labelVisibilityMode="labeled"
-        app:menu="@menu/activity_main_bottom_nav" />
+        app:menu="@menu/activity_main_bottom_nav"
+
+        />
 
 
 

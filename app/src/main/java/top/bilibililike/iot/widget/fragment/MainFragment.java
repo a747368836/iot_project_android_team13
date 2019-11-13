@@ -1,24 +1,36 @@
 package top.bilibililike.iot.widget.fragment;
 
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.load.resource.gif.GifDrawable;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
@@ -41,6 +53,8 @@ public class MainFragment extends BaseFragment implements ControlCallback {
     LinearLayout progressBar;
     @BindView(R.id.recycler_info)
     RecyclerView recyclerInfo;
+    @BindView(R.id.img_back)
+    ImageView imgBack;
 
 
     private DeviceRecyAdapter deviceAdapter;
@@ -53,7 +67,6 @@ public class MainFragment extends BaseFragment implements ControlCallback {
     AppBarLayout appbarLayout;
 
 
-
     private ClimateBean.DataBean climateTrueBean;
 
     private DeviceService deviceService;
@@ -61,9 +74,27 @@ public class MainFragment extends BaseFragment implements ControlCallback {
     @Override
     public void finishCreateView(Bundle state) {
         progressBar.setVisibility(View.VISIBLE);
+        Glide.with(this)
+                .load(getResources().getDrawable(R.mipmap.senear_run))
+                .addListener(new RequestListener<Drawable>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                        if (resource instanceof GifDrawable) {
+                            //加载一次
+                            ((GifDrawable)resource).setLoopCount(1);
+                        }
+                        return false;
+                    }
+                }).into(imgBack);
         initToolbar();
         initInfoRecyclerView();
         initData();
+        getClimate();
         getClimateData();
     }
 
@@ -84,10 +115,10 @@ public class MainFragment extends BaseFragment implements ControlCallback {
     }
 
     private void initInfoRecyclerView() {
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(getActivity(),2);
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(getActivity(), 2);
         gridLayoutManager.setOrientation(GridLayoutManager.HORIZONTAL);
         recyclerInfo.setLayoutManager(gridLayoutManager);
-        infoAdapter = new InfoRecyAdapter(getActivity(),climateTrueBean);
+        infoAdapter = new InfoRecyAdapter(getActivity(), climateTrueBean);
         recyclerInfo.setAdapter(infoAdapter);
 
     }
@@ -119,7 +150,7 @@ public class MainFragment extends BaseFragment implements ControlCallback {
                     public void onNext(List<DeviceBean.DataBean> dataBeans) {
                         List<DeviceBean.DataBean> dataBean = new ArrayList<>();
                         for (int i = 0; i < dataBeans.size(); i++) {
-                            if (!dataBeans.get(i).getType().equals("climate")){
+                            if (!dataBeans.get(i).getType().equals("climate")) {
                                 dataBean.add(dataBeans.get(i));
                             }
                         }
@@ -139,29 +170,21 @@ public class MainFragment extends BaseFragment implements ControlCallback {
                 });
 
 
-
     }
 
-    private void getDeviceData() {
-        deviceService.getDevices()
+
+    private void getClimateData() {
+        Observable.interval(3000,TimeUnit.MILLISECONDS)
                 .compose(bindToLifecycle())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<DeviceBean>() {
+                .subscribe(new Observer<Long>() {
                     @Override
                     public void onSubscribe(Disposable d) {
 
                     }
 
                     @Override
-                    public void onNext(DeviceBean deviceBean) {
-                        progressBar.setVisibility(View.INVISIBLE);
-                        deviceAdapter = new DeviceRecyAdapter(getActivity(), deviceBean.getData(), MainFragment.this);
-                        deviceRecyclerView.setAdapter(deviceAdapter);
-                        //deviceAdapter.refreshData(deviceBean);
-                        deviceRecyclerView.setVisibility(View.VISIBLE);
-
-                        climateTrueBean = null;
+                    public void onNext(Long aLong) {
+                        getClimate();
                     }
 
                     @Override
@@ -174,12 +197,12 @@ public class MainFragment extends BaseFragment implements ControlCallback {
 
                     }
                 });
+
     }
 
-    private void getClimateData(){
+    private void getClimate(){
         deviceService.getClimate()
                 .compose(bindToLifecycle())
-                .repeat(5000)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<ClimateBean>() {
@@ -197,10 +220,10 @@ public class MainFragment extends BaseFragment implements ControlCallback {
                             return;
                         }
                         if (climateTrueBean.getHumidity().equals(dataBean.getHumidity())
-                            && climateTrueBean.getTemperature().equals(dataBean.getTemperature())
-                            && climateTrueBean.getSmoke().equals(dataBean.getSmoke())){
+                                && climateTrueBean.getTemperature().equals(dataBean.getTemperature())
+                                && climateTrueBean.getSmoke().equals(dataBean.getSmoke())) {
 
-                        }else {
+                        } else {
                             infoAdapter.refreshData(dataBean);
                             climateTrueBean = dataBean;
                         }
@@ -217,7 +240,6 @@ public class MainFragment extends BaseFragment implements ControlCallback {
 
                     }
                 });
-
     }
 
 
@@ -298,7 +320,7 @@ public class MainFragment extends BaseFragment implements ControlCallback {
                     @Override
                     public void onNext(PostBackBean postBackBean) {
                         if (postBackBean.getCode() == 200) {
-                            ToastUtil.show("窗帘"+order+"成功");
+                            ToastUtil.show("窗帘" + order + "成功");
                         } else {
                             ToastUtil.show(postBackBean.getMessage());
                         }
@@ -332,7 +354,7 @@ public class MainFragment extends BaseFragment implements ControlCallback {
                         @Override
                         public void onNext(PostBackBean postBackBean) {
                             if (postBackBean.getCode() == 200) {
-                                ToastUtil.show("排风扇"+order+"成功");
+                                ToastUtil.show("排风扇" + order + "成功");
                             }
                         }
 
@@ -359,7 +381,7 @@ public class MainFragment extends BaseFragment implements ControlCallback {
                         @Override
                         public void onNext(PostBackBean postBackBean) {
                             if (postBackBean.getCode() == 200) {
-                                ToastUtil.show("散热器"+order+"成功");
+                                ToastUtil.show("散热器" + order + "成功");
                             }
                         }
 
@@ -391,7 +413,7 @@ public class MainFragment extends BaseFragment implements ControlCallback {
                     @Override
                     public void onNext(PostBackBean postBackBean) {
                         if (postBackBean.getCode() == 200) {
-                            ToastUtil.show("报警器"+order+"成功");
+                            ToastUtil.show("报警器" + order + "成功");
                         }
                     }
 

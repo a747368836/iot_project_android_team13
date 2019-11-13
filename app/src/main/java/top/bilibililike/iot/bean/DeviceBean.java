@@ -2,7 +2,7 @@ package top.bilibililike.iot.bean;
 
 import java.util.List;
 
-public class DeviceBean extends DeviceBaseBean {
+public class DeviceBean {
 
     /**
      * code : 200
