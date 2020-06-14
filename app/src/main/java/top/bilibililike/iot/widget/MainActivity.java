@@ -1,45 +1,75 @@
 package top.bilibililike.iot.widget;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.cardview.widget.CardView;
 import androidx.viewpager.widget.ViewPager;
+
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.tencent.bugly.Bugly;
 
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import org.litepal.LitePal;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import butterknife.BindView;
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
 import top.bilibililike.iot.R;
 import top.bilibililike.iot.base.BaseActivity;
-import top.bilibililike.iot.base.BaseFragment;
+import top.bilibililike.iot.bean.PostBackBean;
+import top.bilibililike.iot.bean.ReportBean;
+import top.bilibililike.iot.bean.ReportResultBean;
 import top.bilibililike.iot.bean.UserBean;
-import top.bilibililike.iot.utils.Status;
-import top.bilibililike.iot.utils.ViewPagerAdapter;
-import top.bilibililike.iot.view.NotMoveViewPager;
-import top.bilibililike.iot.widget.fragment.MainFragment;
-import top.bilibililike.iot.widget.fragment.MineFragment;
-import top.bilibililike.iot.widget.fragment.NotLoginFragment;
-import top.bilibililike.iot.widget.fragment.SituationFragment;
+import top.bilibililike.iot.http.LoginService;
+import top.bilibililike.iot.http.ReportService;
+import top.bilibililike.iot.utils.ToastUtil;
 
-public class MainActivity extends BaseActivity {
+public class MainActivity extends BaseActivity implements View.OnClickListener {
 
+    TextView idTextView;
+    TextView nameTextView;
+    EditText phoneEditText;
+    EditText detailLocEditText;
+    TextView temperatureSelectTextView;
+    TextView patientSelectTextView;
+    EditText extraEditText;
+    CardView reportContainer;
+    TextView reportTextView;
+    TextView historyTextView;
 
-    @BindView(R.id.fragment_container)
-    NotMoveViewPager viewPager;
-    @BindView(R.id.bottom_nav)
-    BottomNavigationView bottomNav;
+    RelativeLayout phoneContainer;
+    RelativeLayout detailLocContainer;
+    RelativeLayout extrasContainer;
 
-    List<BaseFragment> fragmentList ;
+    TextView deadLineTextView;
 
-    MineFragment mineFragment ;
-    UserBean.DataBean userBean;
+    ReportBean reportBean;
+
+    Retrofit retrofit ;
+    ReportService reportService;
+
     @Override
     public int getLayoutId() {
         return R.layout.activity_main;
@@ -47,68 +77,91 @@ public class MainActivity extends BaseActivity {
 
     @Override
     public void initViews(Bundle savedInstanceState) {
-        Bugly.init(this,"32d45c257c",true);
-        initIntent();
-        initViewpager();
+        Bugly.init(this, "32d45c257c", true);
+        initView();
+        initOldData();
+        initTimeText();
+        initNetWorkUtil();
+        checkHasReported();
     }
 
-    private void initViewpager(){
-        UserBean.DataBean userBean = LitePal.findLast(UserBean.DataBean.class);
-        if (userBean != null && userBean.getAvatar() != null){
-            mineFragment = new MineFragment();
-            fragmentList = new ArrayList<>();
-            fragmentList.add(new MainFragment());
-            fragmentList.add(mineFragment);
-        }else {
-            fragmentList = new ArrayList<>();
-            fragmentList.add(new NotLoginFragment());
-            fragmentList.add(new NotLoginFragment());
+    private void initView(){
+        idTextView = findViewById(R.id.id_textView);
+        nameTextView = findViewById(R.id.name_textView);
+        phoneEditText = findViewById(R.id.phoneNum_Edittext);
+        detailLocEditText = findViewById(R.id.detail_location_Edittext);
+        temperatureSelectTextView = findViewById(R.id.temperature_select_textView);
+        patientSelectTextView = findViewById(R.id.patient_select_textView);
+        extraEditText = findViewById(R.id.extras_edittext);
+        reportContainer = findViewById(R.id.report_container_cardView);
+        reportTextView = findViewById(R.id.report_textView);
+        historyTextView = findViewById(R.id.history_textView);
+        deadLineTextView = findViewById(R.id.deadline_textView);
+        phoneContainer = findViewById(R.id.phoneNum_container);
+        detailLocContainer = findViewById(R.id.detail_location_container);
+        extrasContainer = findViewById(R.id.extras_container);
+
+
+
+
+        phoneContainer.setOnClickListener( v -> showInputMethod(phoneEditText));
+        detailLocContainer.setOnClickListener( v -> showInputMethod(detailLocEditText));
+        extrasContainer.setOnClickListener( v -> showInputMethod(extraEditText));
+
+        temperatureSelectTextView.setOnClickListener(this);
+        patientSelectTextView.setOnClickListener(this);
+        reportContainer.setOnClickListener(this);
+        historyTextView.setOnClickListener(this);
+    }
+
+    private void showInputMethod(EditText editText){
+        editText.requestFocus();
+        editText.setSelection(editText.getText().toString().length());
+        InputMethodManager inputManager = (InputMethodManager)editText.getContext()
+                .getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (inputManager != null){
+            inputManager.showSoftInput(editText,0);
         }
-        Log.d("MainActivity",(userBean == null ? "userBean == null":"userBean != null") + "\ncount = "+LitePal.count(UserBean.DataBean.class));
-        viewPager.setOffscreenPageLimit(2);
-        viewPager.setNoScroll(true);
-        viewPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager(),fragmentList));
-        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-            }
-
-            @Override
-            public void onPageSelected(int position) {
-                int id = position == 0 ? R.id.nav_home : position == 1
-                        ? R.id.nav_mine :R.id.nav_home;
-                bottomNav.setSelectedItemId(id);
-            }
-
-            @Override
-            public void onPageScrollStateChanged(int state) {
-
-            }
-        });
-        bottomNav.setOnNavigationItemSelectedListener(menuItem -> {
-            switch (menuItem.getItemId()){
-                case R.id.nav_home:
-                    viewPager.setCurrentItem(0,false);
-                    break;
-                case R.id.nav_mine:
-                    viewPager.setCurrentItem(1,false);
-                    break;
-            }
-            return true;
-        });
-
     }
 
-    private void initIntent(){
-        Intent intent = getIntent();
+    private void initTimeText(){
+        long time = System.currentTimeMillis();
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        Date d1 = new Date(time);
+        String t1 = format.format(d1);
+        deadLineTextView.setText(t1);
+    }
+
+    private void initOldData(){
+        reportBean = LitePal.find(ReportBean.class,1);
+        if (reportBean != null && reportBean.userId != null){
+            idTextView.setText(reportBean.getUserId());
+            nameTextView.setText(reportBean.getUserName());
+            if (!reportBean.isSick()){
+                temperatureSelectTextView.setText(commonSelectItems[2]);
+            }
+            if (!reportBean.isFamilySick()){
+                patientSelectTextView.setText(commonSelectItems[2]);
+            }
+            if (reportBean.getAddress() != null){
+                detailLocEditText.setText(reportBean.getAddress());
+            }
+            if (reportBean.getPhoneNum() != null){
+                phoneEditText.setText(reportBean.getPhoneNum());
+            }
+        }
+    }
+
+
+    private void initIntent() {
+       /* Intent intent = getIntent();
         userBean = new UserBean.DataBean();
         String nickname = intent.getStringExtra("nickname");
         String avatar = intent.getStringExtra("avatar");
         if (nickname != null && !nickname.isEmpty() && avatar != null && !avatar.isEmpty()){
             userBean.setNickname(nickname);
             userBean.setAvatar(avatar);
-        }
+        }*/
     }
 
     @Override
@@ -116,4 +169,167 @@ public class MainActivity extends BaseActivity {
         super.onDestroy();
         finish();
     }
+
+    private String[] commonSelectItems = new String[]{"待选择", "是", "否"};
+
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == R.id.temperature_select_textView) {
+            showSingleChoiceDialog("", commonSelectItems, (pos, items) -> {
+                temperatureSelectTextView.setText(items[pos]);
+                if (pos == 2) {
+                    temperatureSelectTextView.setTextColor(Color.RED);
+                } else {
+                    temperatureSelectTextView.setTextColor(Color.parseColor("#CA0f1f0f"));
+                }
+            });
+        } else if (v.getId() == R.id.patient_select_textView) {
+            showSingleChoiceDialog("", commonSelectItems, (pos, items) -> {
+                patientSelectTextView.setText(items[pos]);
+                if (pos == 1) {
+                    patientSelectTextView.setTextColor(Color.RED);
+                } else {
+                    patientSelectTextView.setTextColor(Color.parseColor("#CA0f1f0f"));
+                }
+            });
+        } else if (v.getId() == R.id.report_container_cardView) {
+            saveBeanAndReport();
+        } else if (v.getId() == R.id.history_textView) {
+
+        }
+    }
+
+    private void saveBeanAndReport(){
+        ReportBean reportBean = LitePal.find(ReportBean.class,1);
+        if (reportBean == null){
+            reportBean = new ReportBean();
+        }
+        reportBean.setUserId(idTextView.getText().toString());
+        reportBean.setUserName(nameTextView.getText().toString());
+        reportBean.setAddress(detailLocEditText.getText().toString());
+        reportBean.setFamilySick(patientSelectTextView.getText().toString().equals("是"));
+        reportBean.setSick(temperatureSelectTextView.getText().toString().equals("否"));
+        reportBean.setTime(System.currentTimeMillis()+"");
+        reportBean.setPhoneNum(phoneEditText.getText().toString());
+        reportBean.save();
+        reportBean.update(1);
+        report(reportBean);
+    }
+
+    private void report(ReportBean reportBean){
+        reportService.report(reportBean.getUserId(),
+                reportBean.getUserName(),reportBean.getTime(),
+                reportBean.isSick(),reportBean.getAddress())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<PostBackBean>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(PostBackBean postBackBean) {
+                        if (postBackBean.getCode() == 200){
+                            ToastUtil.show("打卡成功！");
+                            setReportState(true);
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
+    }
+
+    private void checkHasReported(){
+        System.out.println("TAGG checkHasReported");
+        reportService.getReportInfo(idTextView.getText().toString())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<ReportResultBean>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        System.out.println("TAGG checkHasReported|onSubscribe");
+                    }
+
+                    @Override
+                    public void onNext(ReportResultBean reportResultBean) {
+                        if (reportResultBean.getCode() == 200){
+                            System.out.println("TAGG checkHasReported|onNext");
+                            ReportResultBean.DataBean dataBean = reportResultBean.getData();
+                            try {
+                                String latestRecord = dataBean.getTime().get(dataBean.getTime().size() - 1);
+                                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+                                Date d1 = new Date(Long.parseLong(latestRecord));
+                                String t1 = format.format(d1);
+                                System.out.println("TAGG t1 = " + t1);
+                                System.out.println("TAGG 时间 = " + deadLineTextView.getText().toString());
+                                if (t1.equals(deadLineTextView.getText().toString())){
+                                    setReportState(true);
+                                }
+                            }catch (Exception e){
+                                System.out.println("TAGG " + e.toString());
+                                e.printStackTrace();
+                            }
+                        }
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
+
+    }
+
+    private void initNetWorkUtil(){
+        retrofit = new Retrofit.Builder()
+                .baseUrl("http://iot.bilibililike.top")
+                .addConverterFactory(GsonConverterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .build();
+        reportService = retrofit.create(ReportService.class);
+    }
+
+    private void setReportState(boolean reported){
+        if (reported){
+            reportContainer.setCardBackgroundColor(Color.GRAY);
+            reportContainer.setClickable(false);
+            reportTextView.setText("已完成今日打卡");
+        }else {
+            reportContainer.setCardBackgroundColor(Color.parseColor("#FF66EEB9"));
+            reportContainer.setClickable(true);
+            reportTextView.setText("打卡");
+        }
+    }
+
+    private void showSingleChoiceDialog(String title, String[] items, SelectCallBack callBack) {
+        int[] pos = new int[]{0};
+        final AlertDialog.Builder singleChoiceDialog = new AlertDialog.Builder(MainActivity.this);
+        singleChoiceDialog.setTitle(title);
+        singleChoiceDialog.setSingleChoiceItems(items, 0,
+                (dialog, which) -> pos[0] = which);
+        singleChoiceDialog.setPositiveButton("确定",
+                (dialog, which) -> callBack.onSelected(pos[0], items));
+        singleChoiceDialog.show();
+    }
+
+    interface SelectCallBack {
+        void onSelected(int pos, String[] items);
+    }
+
+
 }

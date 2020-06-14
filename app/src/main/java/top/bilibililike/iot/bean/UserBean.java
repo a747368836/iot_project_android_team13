@@ -1,8 +1,5 @@
 package top.bilibililike.iot.bean;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-
 import org.litepal.crud.LitePalSupport;
 
 public class UserBean{
@@ -11,7 +8,7 @@ public class UserBean{
     /**
      * code : 200
      * message : success
-     * data : {"avatar":"https://i2.hdslb.com/bfs/face/699cdf42d9de9e6e354589d59282aee18469ed7f.jpg@72w_72h.webp","nickname":"管理员"}
+     * data : {"faceid":"0","username":"钟伟民","userid":"2017213074"}
      */
 
     private int code;
@@ -42,63 +39,40 @@ public class UserBean{
         this.data = data;
     }
 
+    public static class DataBean extends LitePalSupport {
 
-    public static class DataBean extends LitePalSupport implements Parcelable  {
         /**
-         * avatar : https://i2.hdslb.com/bfs/face/699cdf42d9de9e6e354589d59282aee18469ed7f.jpg@72w_72h.webp
-         * nickname : 管理员
+         * faceid : 0
+         * username : 钟伟民
+         * userid : 2017213074
          */
 
-        private String avatar;
-        private String nickname;
+        private String faceid;
+        private String username;
+        private String userid;
 
-        public String getAvatar() {
-            return avatar;
+        public String getFaceid() {
+            return faceid;
         }
 
-        public void setAvatar(String avatar) {
-            this.avatar = avatar;
+        public void setFaceid(String faceid) {
+            this.faceid = faceid;
         }
 
-        public String getNickname() {
-            return nickname;
+        public String getUsername() {
+            return username;
         }
 
-        public void setNickname(String nickname) {
-            this.nickname = nickname;
+        public void setUsername(String username) {
+            this.username = username;
         }
 
-        @Override
-        public int describeContents() {
-            return 0;
+        public String getUserid() {
+            return userid;
         }
 
-        @Override
-        public void writeToParcel(Parcel dest, int flags) {
-            dest.writeString(this.avatar);
-            dest.writeString(this.nickname);
+        public void setUserid(String userid) {
+            this.userid = userid;
         }
-
-        public DataBean() {
-        }
-
-        protected DataBean(Parcel in) {
-            this.avatar = in.readString();
-            this.nickname = in.readString();
-        }
-
-        public static final Creator<DataBean> CREATOR = new Creator<DataBean>() {
-            @Override
-            public DataBean createFromParcel(Parcel source) {
-                return new DataBean(source);
-            }
-
-            @Override
-            public DataBean[] newArray(int size) {
-                return new DataBean[size];
-            }
-        };
     }
-
-
 }

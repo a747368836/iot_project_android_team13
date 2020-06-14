@@ -20,12 +20,7 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.DataSource;
-import com.bumptech.glide.load.engine.GlideException;
-import com.bumptech.glide.load.resource.gif.GifDrawable;
-import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.Target;
+
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.IOException;
@@ -36,11 +31,14 @@ import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.OkHttpClient;
+import org.litepal.LitePal;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import top.bilibililike.iot.R;
 import top.bilibililike.iot.base.BaseActivity;
+import top.bilibililike.iot.bean.ReportBean;
 import top.bilibililike.iot.bean.UserBean;
 import top.bilibililike.iot.http.LoginService;
 import top.bilibililike.iot.utils.ToastUtil;
@@ -80,24 +78,12 @@ public class LoginActivity extends BaseActivity {
 
     @Override
     public void initViews(Bundle savedInstanceState) {
+        ReportBean reportBean = LitePal.find(ReportBean.class,1);
+        if (reportBean != null && reportBean.userId != null){
+            Intent intent = new Intent(LoginActivity.this,MainActivity.class);
+            startActivity(intent);
+        }
         initClick();
-        /*Glide.with(this)
-                .load(getResources().getDrawable(R.mipmap.senear_run))
-                .addListener(new RequestListener<Drawable>() {
-                    @Override
-                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                        return false;
-                    }
-
-                    @Override
-                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                        if (resource instanceof GifDrawable) {
-                            //加载一次
-                            ((GifDrawable)resource).setLoopCount(1);
-                        }
-                        return false;
-                    }
-                }).into(imgLogo);*/
 
     }
 
@@ -106,7 +92,8 @@ public class LoginActivity extends BaseActivity {
                 .getLayoutParams();
         originML = param.leftMargin;
         originMR = param.rightMargin;
-        imgBack.setOnClickListener(v -> onBackPressed());
+        imgBack.setVisibility(View.GONE);
+        //imgBack.setOnClickListener(v -> onBackPressed());
         tvLogin.setOnClickListener(v -> {
             int width = tvLogin.getWidth();
             int height = tvLogin.getHeight();
@@ -124,9 +111,8 @@ public class LoginActivity extends BaseActivity {
 
     private void login(String username, String password) {
 
-
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://www.bilibililike.top")
+                .baseUrl("http://iot.bilibililike.top")
                 .addConverterFactory(GsonConverterFactory.create())
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .build();
@@ -158,7 +144,12 @@ public class LoginActivity extends BaseActivity {
 
                     @Override
                     public void onError(Throwable e) {
-
+                        if (set.isRunning()) {
+                            set.cancel();
+                        }
+                        recovery();
+                        e.printStackTrace();
+                        loginFailed("网络请求失败，请重试");
                     }
 
                     @Override
@@ -312,9 +303,16 @@ public class LoginActivity extends BaseActivity {
 
     private void loginSuccess(UserBean userBean) {
         ToastUtil.show("登录成功");
+        int sum = LitePal.count(ReportBean.class);
+        ReportBean reportBean = new ReportBean();
+        reportBean.setUserName(userBean.getData().getUsername());
+        reportBean.setUserId(userBean.getData().getUserid());
+        if (sum == 0){
+            reportBean.save();
+        }else {
+            reportBean.update(1);
+        }
         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-        intent.putExtra("nickname", userBean.getData().getNickname());
-        intent.putExtra("avatar", userBean.getData().getAvatar());
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
         finish();

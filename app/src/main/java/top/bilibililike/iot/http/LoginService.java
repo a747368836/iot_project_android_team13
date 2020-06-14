@@ -13,6 +13,7 @@ import top.bilibililike.iot.bean.UserBean;
 public interface LoginService {
 
 
-    @GET("/iot/login/")
-    Observable<UserBean> login(@Query("username") String username, @Query("password") String password);
+    @POST("/login/index.php")
+    @FormUrlEncoded
+    Observable<UserBean> login(@Field("userid") String username, @Field("password") String password);
 }

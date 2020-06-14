@@ -1,0 +1,202 @@
+import java.nio.charset.StandardCharsets
+import java.nio.file.*
+
+ext {
+    TAG = "jacoco_offline> ${project.name}>"
+    COLLECT_COVERAGE_HTML = (project.properties.get('collectCoverageHtml') ?: System.getenv('collectCoverageHtml') ?: false).toBoolean()
+}
+
+apply plugin: 'jacoco'
+
+configurations {
+    jacocoAnt
+    jacocoRuntime
+}
+
+jacoco {
+    toolVersion = "0.7.4+"
+//    toolVersion = "0.7.6.201602180812"
+}
+
+def offline_instrumented_outputDir = "$buildDir.path/intermediates/classes-instrumented/debug"
+
+tasks.withType(Test) {
+    jacoco.includeNoLocationClasses = true
+}
+
+def coverageSourceDirs = ['src/main'] + project.file('gradle.properties').with({
+    Properties props = new Properties()
+    it.withInputStream { props.load(it) }
+    return props.getProperty('PROJ_DIRS', '').split(',').collect({
+        it.trim()
+    }).grep({
+        !it.isEmpty()
+    }).collect({
+        "${it}/src/main"
+    }).grep({
+        project.file(it).exists()
+    })
+})
+project.logger.lifecycle("${TAG} coverageSourceDirs = ${coverageSourceDirs}")
+
+task jacocoTestReport(type: JacocoReport, dependsOn: "testDebugUnitTest") {
+    group 'verification'
+
+    description = "Generate Jacoco coverage reports"
+
+    classDirectories = fileTree(
+            dir: './build/intermediates/classes/debug',
+            excludes: ['**/R.class',
+                       '**/R$*.class',
+                       '**/*$ViewInjector*.*',
+                       '**/BuildConfig.*',
+                       '**/Manifest*.*']
+    )
+
+    sourceDirectories = files(coverageSourceDirs)
+    executionData = files('./build/jacoco/testDebugUnitTest.exec')
+
+    doLast {
+        if (COLLECT_COVERAGE_HTML) {
+            def jacocoHtmlDir = project.jacocoTestReport.reports.html.destination
+            def reportsDir = new File("${project.rootProject.buildDir}/reports/${jacocoHtmlDir.name}")
+            reportsDir.mkdirs()
+            project.copy {
+                from jacocoHtmlDir
+                into "${reportsDir}/${project.name}"
+            }
+
+            new File(reportsDir, 'index.html').with {
+                if (!it.exists()) {
+                    it.write('<html><body><ul><!--INSERT--></ul></body></html>')
+                }
+
+                def text = it.text
+                def idx = text.indexOf('<!--INSERT-->')
+                it.write(text.substring(0, idx)
+                        + "<li><a href=\"${project.name}/index.html\">${project.name}</a></li>"
+                        + text.substring(idx))
+            }
+        }
+    }
+
+    doLast {
+        File sourceXml = project.jacocoTestReport.reports.xml.destination
+        File destDir = new File(project.rootProject.buildDir, "reports/${sourceXml.name.replaceAll('\\.[a-z]+$', '')}")
+        destDir.mkdirs()
+
+        project.copy {
+            from sourceXml
+            into "${destDir}/all"
+            rename sourceXml.name, project.name + '.xml'
+        }
+
+        File outputZip = new File(destDir, destDir.name + '.zip')
+        File outputLock = new File(outputZip.absolutePath + '.lock')
+        def closeables = [] as List
+        try {
+            if (!outputLock.exists()) {
+                outputLock.createNewFile()
+            }
+            FileOutputStream fos = new FileOutputStream(outputLock)
+            closeables.add(fos)
+            def lock = fos.channel.lock()
+            try {
+                URI uri = URI.create("jar:" + Paths.get(outputZip.absolutePath).toUri())
+                FileSystem fs = FileSystems.newFileSystem(uri, [create: 'true'])
+                closeables.add(fs)
+
+                def nf = fs.getPath("${project.name}.xml")
+                Writer writer = Files.newBufferedWriter(nf, StandardCharsets.UTF_8, StandardOpenOption.CREATE)
+                try {
+                    project.logger.lifecycle("${TAG} writing '${sourceXml}' into '${outputZip}'")
+                    writer.write(sourceXml.text)
+                    writer.flush()
+                } finally {
+                    writer.close()
+                }
+
+            } finally {
+                lock.release()
+            }
+        } finally {
+            closeables.reverseEach {
+                try {
+                    it?.close()
+                } catch (IOException th) {
+                    project.logger.info("${TAG} ${th.getMessage()}", th)
+                }
+            }
+        }
+    }
+}
+
+jacocoTestReport {
+    reports {
+        csv.enabled true
+        csv.destination file("build/test-results/jacocoCvs.csv")
+        xml.enabled true
+        xml.destination file("build/test-results/jacocoXml.xml")
+        html.enabled true
+        html.destination file("build/test-results/jacocoHtml")
+    }
+}
+
+task createOfflineTestCoverageReport(dependsOn: ['instrument', 'testDebugUnitTest']) {
+    group 'verification'
+    doLast {
+        def keyfiles = ["./build/jacoco/testDebugUnitTest.exec", "./build/intermediates/classes/debug"]
+        if (keyfiles.every({ file(it).exists() })) {
+            ant.taskdef(name: 'report',
+                    classname: 'org.jacoco.ant.ReportTask',
+                    classpath: configurations.jacocoAnt.asPath)
+            ant.report() {
+                executiondata {
+                    ant.file(file: "./build/jacoco/testDebugUnitTest.exec")
+                }
+                structure(name: 'Example') {
+                    classfiles {
+                        fileset(dir: "./build/intermediates/classes/debug")
+                    }
+                    sourcefiles {
+                        coverageSourceDirs.each {
+                            fileset(dir: it)
+                        }
+                    }
+                }
+                //Uncomment if we want the task to generate jacoco html reports. However, the current script does not exclude files.
+                //An alternative is to used jacocoTestReport after this task finishes
+                //html(destdir: "$buildDir.path/reports/jacocoHtml")
+            }
+        } else {
+            keyfiles.grep({ !file(it).exists() }).each {
+                project.logger.log(LogLevel.WARN, "${TAG} can't find '${it}'")
+            }
+        }
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    if (graph.hasTask(instrument)) {
+        tasks.withType(Test) {
+            doFirst {
+                systemProperty 'jacoco-agent.destfile', './build/jacoco/testDebugUnitTest.exec'
+                classpath = files(offline_instrumented_outputDir) + classpath + configurations.jacocoRuntime
+            }
+        }
+    }
+}
+
+task instrument(dependsOn: 'compileDebugUnitTestSources') {
+    doLast {
+        println 'Instrumenting classes'
+
+        ant.taskdef(name: 'instrument',
+                classname: 'org.jacoco.ant.InstrumentTask',
+                classpath: configurations.jacocoAnt.asPath)
+
+        ant.instrument(destdir: offline_instrumented_outputDir) {
+            fileset(dir: "./build/intermediates/classes/debug")
+        }
+    }
+}

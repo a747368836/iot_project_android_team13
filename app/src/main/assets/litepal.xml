@@ -33,6 +33,7 @@
     -->
     <list>
         <mapping class="top.bilibililike.iot.bean.UserBean$DataBean"/>
+        <mapping class="top.bilibililike.iot.bean.ReportBean"/>
     </list>
 
     <!--
