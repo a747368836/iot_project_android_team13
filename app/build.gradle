@@ -47,8 +47,6 @@ dependencies {
     implementation 'com.jakewharton:butterknife:10.1.0'
     annotationProcessor 'com.jakewharton:butterknife-compiler:10.1.0'
 
-    implementation 'com.tencent.bugly:nativecrashreport:3.0'
-    implementation 'com.tencent.bugly:crashreport_upgrade:1.4.1'
 
     implementation 'de.hdodenhof:circleimageview:3.0.0'
 
@@ -63,9 +61,12 @@ dependencies {
     implementation "com.squareup.retrofit2:converter-gson:2.6.0"
     implementation 'com.squareup.retrofit2:adapter-rxjava2:2.6.0'
 
-    implementation 'com.google.code.gson:gson:2.8.5'
+    //implementation 'com.google.code.gson:gson:2.8.5'
 
 
     implementation 'org.litepal.android:java:3.0.0'
 
+    api 'com.github.CymChad:BaseRecyclerViewAdapterHelper:3.0.0'
+
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.4'
 }

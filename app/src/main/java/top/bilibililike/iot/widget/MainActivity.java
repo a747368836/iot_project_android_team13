@@ -23,25 +23,36 @@ import androidx.viewpager.widget.ViewPager;
 
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.tencent.bugly.Bugly;
 
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import org.json.JSONObject;
 import org.litepal.LitePal;
 
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
+import top.bilibililike.iot.ClientHolder;
 import top.bilibililike.iot.R;
 import top.bilibililike.iot.base.BaseActivity;
 import top.bilibililike.iot.bean.PostBackBean;
 import top.bilibililike.iot.bean.ReportBean;
 import top.bilibililike.iot.bean.ReportResultBean;
 import top.bilibililike.iot.bean.UserBean;
+import top.bilibililike.iot.bean.WarningBean;
 import top.bilibililike.iot.http.LoginService;
 import top.bilibililike.iot.http.ReportService;
 import top.bilibililike.iot.utils.ToastUtil;
@@ -67,7 +78,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     ReportBean reportBean;
 
-    Retrofit retrofit ;
     ReportService reportService;
 
     @Override
@@ -77,7 +87,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     @Override
     public void initViews(Bundle savedInstanceState) {
-        Bugly.init(this, "32d45c257c", true);
+        //Bugly.init(this, "32d45c257c", true);
         initView();
         initOldData();
         initTimeText();
@@ -107,11 +117,17 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         phoneContainer.setOnClickListener( v -> showInputMethod(phoneEditText));
         detailLocContainer.setOnClickListener( v -> showInputMethod(detailLocEditText));
         extrasContainer.setOnClickListener( v -> showInputMethod(extraEditText));
+        historyTextView.setOnClickListener( v -> turn2History());
 
         temperatureSelectTextView.setOnClickListener(this);
         patientSelectTextView.setOnClickListener(this);
         reportContainer.setOnClickListener(this);
-        historyTextView.setOnClickListener(this);
+    }
+
+    private void turn2History(){
+        Intent intent = new Intent(MainActivity.this,HistoryActivity.class);
+        intent.putExtra("userId",idTextView.getText().toString());
+        startActivity(intent);
     }
 
     private void showInputMethod(EditText editText){
@@ -250,33 +266,28 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     private void checkHasReported(){
         System.out.println("TAGG checkHasReported");
-        reportService.getReportInfo(idTextView.getText().toString())
+        reportService.getReportInfo()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<ReportResultBean>() {
+                .subscribe(new Observer<WarningBean>() {
                     @Override
                     public void onSubscribe(Disposable d) {
-                        System.out.println("TAGG checkHasReported|onSubscribe");
+
                     }
 
                     @Override
-                    public void onNext(ReportResultBean reportResultBean) {
-                        if (reportResultBean.getCode() == 200){
-                            System.out.println("TAGG checkHasReported|onNext");
-                            ReportResultBean.DataBean dataBean = reportResultBean.getData();
-                            try {
-                                String latestRecord = dataBean.getTime().get(dataBean.getTime().size() - 1);
-                                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-                                Date d1 = new Date(Long.parseLong(latestRecord));
-                                String t1 = format.format(d1);
-                                System.out.println("TAGG t1 = " + t1);
-                                System.out.println("TAGG 时间 = " + deadLineTextView.getText().toString());
-                                if (t1.equals(deadLineTextView.getText().toString())){
+                    public void onNext(WarningBean warningBean) {
+                        if (warningBean.getCode() == 200){
+                            WarningBean.DataBean dataBean = warningBean.getData();
+                            List absentList = dataBean.getAbsentList();
+                            for (int i = 0; i < absentList.size(); i++) {
+                                String id = (String) ((List) absentList.get(i)).get(0);
+                                System.out.println("TAGG ((List) absentList.get(0)).get(0) = " + ((List) absentList.get(i)).get(0));
+                                System.out.println("TAGG ((List) absentList.get(0)).get(1) = " + ((List) absentList.get(i)).get(1));
+                                if (idTextView.getText().toString().equals(id)){
                                     setReportState(true);
+                                    break;
                                 }
-                            }catch (Exception e){
-                                System.out.println("TAGG " + e.toString());
-                                e.printStackTrace();
                             }
                         }
 
@@ -296,12 +307,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     }
 
     private void initNetWorkUtil(){
-        retrofit = new Retrofit.Builder()
-                .baseUrl("http://iot.bilibililike.top")
-                .addConverterFactory(GsonConverterFactory.create())
-                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                .build();
-        reportService = retrofit.create(ReportService.class);
+        reportService = ClientHolder.getInstance().create(ReportService.class);
     }
 
     private void setReportState(boolean reported){

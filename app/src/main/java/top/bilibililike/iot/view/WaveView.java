@@ -25,9 +25,26 @@ public class WaveView extends View {
     private int waveHeight = 80;// 波浪的最高度
     private int waveWidth  ;//波长
     private float offset =0f;//偏移量
+    private ValueAnimator mAnimator;
     public WaveView(Context context, AttributeSet attrs) {
         super(context, attrs);
         initView();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if (mAnimator != null){
+            mAnimator.end();
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (mAnimator != null){
+            mAnimator.start();
+        }
     }
 
     /**
@@ -35,7 +52,7 @@ public class WaveView extends View {
      */
     private void updateXControl(){
         //设置一个波长的偏移
-        ValueAnimator mAnimator = ValueAnimator.ofFloat(0,waveWidth);
+        mAnimator = ValueAnimator.ofFloat(0,waveWidth);
         mAnimator.setInterpolator(new LinearInterpolator());
         mAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
 

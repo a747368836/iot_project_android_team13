@@ -7,7 +7,9 @@ import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
 import top.bilibililike.iot.bean.PostBackBean;
+import top.bilibililike.iot.bean.ReportHistoryBean;
 import top.bilibililike.iot.bean.ReportResultBean;
+import top.bilibililike.iot.bean.WarningBean;
 
 public interface ReportService {
     @FormUrlEncoded
@@ -20,8 +22,13 @@ public interface ReportService {
             ,@Field("address") String address
     );
 
+
+    @GET("face/index.php?time=1")
+    Observable<WarningBean> getReportInfo();
+
     @GET("/phone/index.php")
-    Observable<ReportResultBean> getReportInfo(
+    Observable<ReportHistoryBean> getReportHistory(
             @Query("userid") String userId
     );
+
 }

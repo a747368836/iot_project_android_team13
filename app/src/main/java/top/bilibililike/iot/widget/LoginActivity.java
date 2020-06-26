@@ -5,6 +5,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -15,6 +16,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -36,6 +38,7 @@ import org.litepal.LitePal;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
+import top.bilibililike.iot.ClientHolder;
 import top.bilibililike.iot.R;
 import top.bilibililike.iot.base.BaseActivity;
 import top.bilibililike.iot.bean.ReportBean;
@@ -82,9 +85,13 @@ public class LoginActivity extends BaseActivity {
         if (reportBean != null && reportBean.userId != null){
             Intent intent = new Intent(LoginActivity.this,MainActivity.class);
             startActivity(intent);
+            finish();
         }
         initClick();
-
+        /*TestText testText = new TestText(this);
+        RelativeLayout toolbarContainer = findViewById(R.id.toolbar_container);
+        testText.setText("内存泄漏测试");
+        toolbarContainer.addView(testText);*/
     }
 
     private void initClick() {
@@ -110,13 +117,7 @@ public class LoginActivity extends BaseActivity {
 
 
     private void login(String username, String password) {
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://iot.bilibililike.top")
-                .addConverterFactory(GsonConverterFactory.create())
-                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                .build();
-        LoginService loginService = retrofit.create(LoginService.class);
+        LoginService loginService = ClientHolder.getInstance().create(LoginService.class);
         loginService.login(username, password)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -313,7 +314,6 @@ public class LoginActivity extends BaseActivity {
             reportBean.update(1);
         }
         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
         finish();
     }
@@ -321,6 +321,13 @@ public class LoginActivity extends BaseActivity {
     private void loginFailed(String message) {
         ToastUtil.show(message);
         recovery();
+    }
+
+    class TestText extends androidx.appcompat.widget.AppCompatTextView{
+
+        public TestText(Context context) {
+            super(context);
+        }
     }
 
 
