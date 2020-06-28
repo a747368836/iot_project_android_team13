@@ -3,6 +3,7 @@ package top.bilibililike.iot;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
+import top.bilibililike.iot.http.ReportService;
 
 public final class ClientHolder {
     private static Retrofit instance = null;

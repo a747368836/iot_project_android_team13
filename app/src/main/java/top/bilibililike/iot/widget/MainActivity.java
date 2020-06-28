@@ -1,5 +1,8 @@
 package top.bilibililike.iot.widget;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -8,7 +11,11 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -19,19 +26,28 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
+import androidx.core.app.NotificationCompat;
 import androidx.viewpager.widget.ViewPager;
 
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
 import io.reactivex.Observer;
+import io.reactivex.Scheduler;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import java.io.IOException;
+import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.MediaType;
@@ -50,11 +66,15 @@ import top.bilibililike.iot.R;
 import top.bilibililike.iot.base.BaseActivity;
 import top.bilibililike.iot.bean.PostBackBean;
 import top.bilibililike.iot.bean.ReportBean;
+import top.bilibililike.iot.bean.ReportHistoryBean;
+import top.bilibililike.iot.bean.ReportHistoryBean.DataBean;
 import top.bilibililike.iot.bean.ReportResultBean;
 import top.bilibililike.iot.bean.UserBean;
 import top.bilibililike.iot.bean.WarningBean;
 import top.bilibililike.iot.http.LoginService;
 import top.bilibililike.iot.http.ReportService;
+import top.bilibililike.iot.utils.NotificationBindHelper;
+import top.bilibililike.iot.utils.NotificationBroadcastReceiver;
 import top.bilibililike.iot.utils.ToastUtil;
 
 public class MainActivity extends BaseActivity implements View.OnClickListener {
@@ -79,6 +99,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     ReportBean reportBean;
 
     ReportService reportService;
+
+    NotificationManager mNotificationManager;
 
     @Override
     public int getLayoutId() {
@@ -122,6 +144,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         temperatureSelectTextView.setOnClickListener(this);
         patientSelectTextView.setOnClickListener(this);
         reportContainer.setOnClickListener(this);
+
+        mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
     }
 
     private void turn2History(){
@@ -209,6 +233,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 }
             });
         } else if (v.getId() == R.id.report_container_cardView) {
+            if (TextUtils.isEmpty(phoneEditText.getText().toString()) || TextUtils.isEmpty(detailLocEditText.getText().toString())
+            || TextUtils.equals("请选择",temperatureSelectTextView.getText().toString())
+                    || TextUtils.equals("请选择",patientSelectTextView.getText().toString())){
+                ToastUtil.show("请填写完整再打卡");
+                return;
+            }
             saveBeanAndReport();
         } else if (v.getId() == R.id.history_textView) {
 
@@ -264,33 +294,36 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 });
     }
 
-    private void checkHasReported(){
-        System.out.println("TAGG checkHasReported");
-        reportService.getReportInfo()
+    private void getHistory(String userId){
+        reportService.getReportHistory(userId)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<WarningBean>() {
+                .subscribe(new Observer<ReportHistoryBean>() {
                     @Override
                     public void onSubscribe(Disposable d) {
 
                     }
 
                     @Override
-                    public void onNext(WarningBean warningBean) {
-                        if (warningBean.getCode() == 200){
-                            WarningBean.DataBean dataBean = warningBean.getData();
-                            List absentList = dataBean.getAbsentList();
-                            for (int i = 0; i < absentList.size(); i++) {
-                                String id = (String) ((List) absentList.get(i)).get(0);
-                                System.out.println("TAGG ((List) absentList.get(0)).get(0) = " + ((List) absentList.get(i)).get(0));
-                                System.out.println("TAGG ((List) absentList.get(0)).get(1) = " + ((List) absentList.get(i)).get(1));
-                                if (idTextView.getText().toString().equals(id)){
-                                    setReportState(true);
-                                    break;
-                                }
-                            }
-                        }
+                    public void onNext(ReportHistoryBean reportResultBean) {
+                        System.out.println("TAGG getHistort|onNext");
+                        if (reportResultBean.getCode() == 200 && reportResultBean.getData().size() > 0){
+                            Collections.reverse(reportResultBean.getData());
 
+                            DataBean dataBean = reportResultBean.getData().get(0);
+                            long latestTime = Long.parseLong(dataBean.getTime());
+                            System.out.println("TAGG latestTime = " + latestTime);
+                            Date date = new Date();
+                            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                            String timeStr = simpleDateFormat.format(date);
+
+                            long time = (new SimpleDateFormat("yyyy-MM-dd")).parse(timeStr,new ParsePosition(0)).getTime();
+                            if (latestTime > time){
+                                setReportState(true);
+                            }
+                            System.out.println("TAGG time = " + time);
+
+                        }
                     }
 
                     @Override
@@ -303,6 +336,91 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
                     }
                 });
+    }
+
+    private void checkHasReported(){
+        System.out.println("TAGG checkHasReported");
+        getHistory(idTextView.getText().toString());
+        Disposable disposable = Observable.interval(1000, TimeUnit.MILLISECONDS)
+                .subscribe(aLong -> reportService.getReportInfo()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new Observer<WarningBean>() {
+                            @Override
+                            public void onSubscribe(Disposable d) {
+
+                            }
+
+                            @Override
+                            public void onNext(WarningBean warningBean) {
+                                if (warningBean.getCode() == 200){
+                                    WarningBean.DataBean dataBean = warningBean.getData();
+                                    List absentList = dataBean.getAbsentList();
+                                    List patientList = dataBean.getSickList();
+                                    startWarningService(absentList.size(),patientList.size());
+
+                                    /*for (int i = 0; i < absentList.size(); i++) {
+                                        String id = (String) ((List) absentList.get(i)).get(0);
+                                        if (idTextView.getText().toString().equals(id)){
+                                            setReportState(true);
+                                            break;
+                                        }
+                                    }
+                                    for (int i = 0; i < patientList.size(); i++) {
+                                        String id = (String) ((List) patientList.get(i)).get(0);
+                                        if (idTextView.getText().toString().equals(id)){
+                                            setReportState(true);
+                                            break;
+                                        }
+                                    }*/
+                                }
+
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                                e.printStackTrace();
+                            }
+
+                            @Override
+                            public void onComplete() {
+
+                            }
+                        }));
+    }
+
+
+    private void startWarningService(int absentSize,int patientSize){
+        if (absentSize == ForegroundService.getUnReportSum() && patientSize == ForegroundService.getErrorReportSum()){
+            return;
+        }
+        ForegroundService.setUnReportSum(absentSize);
+        ForegroundService.setErrorReportSum(patientSize);
+        Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        NotificationCompat.Builder notificationBindBuilder = new NotificationCompat.Builder(this, NotificationBindHelper.CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.mipmap.report_logo) //设置通知图标
+                .setContentTitle("当前打卡信息通报")//设置通知标题
+                .setContentText("目前未打卡人数："+absentSize+"人\n当前异常人数："+patientSize+"人")//设置通知内容
+                .setSound(defaultSoundUri)
+                .setContentIntent(getPendingIntent("notification_bing_clicked", NotificationBindHelper.NOTIFICATION_ID))
+                .setDeleteIntent(getPendingIntent("notification_bing_cancelled", NotificationBindHelper.NOTIFICATION_ID));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(NotificationBindHelper.CHANNEL_ID, "绑定通知", NotificationManager.IMPORTANCE_LOW);
+            channel.setDescription("description");
+            mNotificationManager.createNotificationChannel(channel);
+        }else {
+            mNotificationManager.notify(ForegroundService.NOTIFICATION_ID, notificationBindBuilder.build());
+        }
+        startService(new Intent(MainActivity.this, ForegroundService.class));
+        ForegroundService.notifyUpdate(mNotificationManager,this);
+    }
+
+    private PendingIntent getPendingIntent(String action, int type) {
+        Intent intent = new Intent(this, NotificationBroadcastReceiver.class);
+        intent.setAction(action);
+        intent.putExtra(NotificationBroadcastReceiver.TYPE, type);
+        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
 
     }
 
